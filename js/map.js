@@ -176,26 +176,27 @@ window.createMap = function (svg) {
       onStep(i, s);
       if (opts.follow !== false) {
         const ids = s.node ? [s.node].concat(opts.rest || []) : (M.links[s.link].ends || null);
-        frame(s.node ? (opts.rest && opts.rest.includes(s.node) ? opts.rest : ids) : ids, true, 0.7);
+        frame(s.node ? (opts.rest && opts.rest.includes(s.node) ? opts.rest : ids) : ids, true, 0.9);
+        await wait(reduce() ? 0 : 350);
       }
       if (s.node) {
         nodes[s.node].g.classList.add('pulse');
-        await wait(reduce() ? 900 : 1200);
+        await wait(reduce() ? 1400 : 2000);
         nodes[s.node].g.classList.remove('pulse');
         continue;
       }
       const L = links[s.link];
       L.path.classList.add('active');
-      if (reduce()) { await wait(1100); }
+      if (reduce()) { await wait(1600); }
       else {
         const from = s.dir < 0 ? L.len : 0, to = s.dir < 0 ? 0 : L.len;
         place(L.path, from); show(packet, true); show(halo, true);
         const o = { t: from };
         await new Promise(res => gsap.to(o, {
-          t: to, duration: Math.max(0.7, Math.min(1.4, L.len / 180)), ease: 'power2.inOut',
+          t: to, duration: Math.max(1.2, Math.min(2.2, L.len / 110)), ease: 'power2.inOut',
           onUpdate: () => { if (my === token) place(L.path, o.t); }, onComplete: res
         }));
-        await wait(380);
+        await wait(1000);
       }
       if (my !== token) return false;
       L.path.classList.remove('active');
