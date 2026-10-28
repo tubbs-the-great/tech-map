@@ -26,7 +26,16 @@
   const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
   // progress bar
-  for (let i = 1; i <= D.totalPasses; i++) progressBar.appendChild(document.createElement('li'));
+  for (let i = 1; i <= D.totalPasses; i++) {
+    const li = document.createElement('li');
+    const built = passes[i - 1];
+    const b = document.createElement('button'); b.type = 'button';
+    b.setAttribute('aria-label', built ? `Go to pass ${i}: ${built.title}` : `Pass ${i} (coming soon)`);
+    b.title = built ? `Pass ${i}: ${built.title}` : `Pass ${i} · coming soon`;
+    if (built) b.addEventListener('click', () => document.getElementById('pass-' + i).scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    else li.classList.add('locked');
+    li.appendChild(b); progressBar.appendChild(li);
+  }
 
   // chapters
   passes.forEach((P, idx) => {
@@ -47,9 +56,9 @@
     }
     const next = passes[idx + 1];
     h += `<div class="chapter-nav">`;
-    if (idx > 0) h += `<a class="btn btn-small" href="#pass-${P.n - 1}">← Pass ${P.n - 1}</a>`;
-    if (next) h += `<a class="btn btn-primary btn-small" href="#pass-${next.n}">Next: ${esc(next.title)} →</a>`;
-    else h += `<a class="btn btn-primary btn-small" href="#story-end">More passes coming →</a>`;
+    h += idx > 0 ? `<a class="btn btn-small btn-ghost" href="#pass-${P.n - 1}">← Back</a>` : `<span></span>`;
+    if (next) h += `<a class="btn btn-primary" href="#pass-${next.n}">Continue to pass ${next.n} →</a>`;
+    else h += `<a class="btn btn-primary" href="#story-end">See what's coming →</a>`;
     h += `</div>`;
     sec.innerHTML = h;
     chaptersEl.appendChild(sec);
@@ -59,6 +68,17 @@
   // "coming next" list
   const nextList = document.getElementById('nextList');
   D.nextUp.forEach(t => { const li = document.createElement('li'); li.textContent = t; nextList.appendChild(li); });
+
+  document.addEventListener('click', e => {
+    const link = e.target.closest('a[href^="#"]');
+    if (!link) return;
+    const target = document.querySelector(link.getAttribute('href'));
+    if (!target) return;
+    e.preventDefault();
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    history.replaceState(null, '', link.getAttribute('href'));
+  });
 
   // ---- state ----
   let cur = 0;
@@ -88,13 +108,25 @@
     defEl.innerHTML = 'Tap any box on the map to see what it is.';
     MAP.setSelected(null);
     caption.textContent = `PASS ${n} · ${P.title}`;
-    if (autoplay) playCurrent();
-    else MAP.stop();
+    caption.classList.remove('ask');
+    replayText.textContent = '▶ Play the request';
+    MAP.stop();
+    if (autoplay) pendingPlay = true;
+    updateAskHint();
   }
 
+  // when a pass's check is answered on the map, make the map say so
+  function updateAskHint() {
+    const c = checks[cur];
+    const asking = !!(c && c.node && !c.done);
+    for (const id in nodes) nodes[id].g.classList.toggle('askable', asking && MAP.isVisible(id));
+    if (asking && !replayBtn.classList.contains('playing')) { caption.textContent = 'QUICK CHECK · TAP A BOX ON THE MAP TO ANSWER'; caption.classList.add('ask'); }
+  }
+
+  const replayText = document.getElementById('replayText');
   async function playCurrent() {
     const P = passes[cur - 1];
-    replayBtn.disabled = true;
+    replayBtn.disabled = true; replayBtn.classList.add('playing'); replayText.textContent = 'Playing';
     const items = [...stepsEl.children];
     items.forEach(li => li.classList.remove('active', 'done'));
     const ok = await MAP.play(P.steps, (i, s) => {
@@ -105,9 +137,18 @@
       items.forEach(li => { li.classList.remove('active'); li.classList.add('done'); });
       caption.textContent = `PASS ${cur} · ${P.title} · done`;
     }
-    replayBtn.disabled = false;
+    replayBtn.classList.remove('playing');
+    updateAskHint();
+    replayBtn.disabled = false; replayBtn.classList.remove('playing'); replayText.textContent = '↻ Play it again';
   }
   replayBtn.addEventListener('click', playCurrent);
+
+  // don't start the animation until the page has stopped moving
+  let settleTimer = null, pendingPlay = false;
+  window.addEventListener('scroll', () => {
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(() => { if (pendingPlay) { pendingPlay = false; playCurrent(); } }, 220);
+  }, { passive: true });
 
   // ---- node clicks: definitions and map-based checks ----
   const nodes = MAP.nodes();
@@ -123,6 +164,8 @@
         if (id === c.node) {
           c.done = true; MAP.flash(id, 'right');
           box.innerHTML = `<b class="good">Right.</b> ${esc(c.why)}`;
+          caption.textContent = `PASS ${cur} · ${passes[cur - 1].title}`; caption.classList.remove('ask');
+          for (const k in nodes) nodes[k].g.classList.remove('askable');
         } else {
           MAP.flash(id, 'wrong');
           box.innerHTML = `<b class="bad">Not that one.</b> Try another box on the map.`;
@@ -173,5 +216,6 @@
   const m = /^#pass-(\d+)$/.exec(location.hash);
   const start = m && passes[+m[1] - 1] ? +m[1] : 1;
   showPass(start, false);
-  setTimeout(() => { if (cur === start) playCurrent(); }, 600);
+  pendingPlay = false;
+  setTimeout(() => { if (cur === start) playCurrent(); }, 700);
 })();
