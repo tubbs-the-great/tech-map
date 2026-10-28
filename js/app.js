@@ -47,6 +47,7 @@
     if (P.words && P.words.length) {
       h += `<div class="words"><span class="label">WORDS TO KNOW</span>${P.words.map(([t, d]) => `<p><strong>${esc(t)}</strong> · ${esc(d)}</p>`).join('')}</div>`;
     }
+    if (P.peek) h += `<details class="peek"><summary>${esc(P.peek.label)}</summary><pre>${esc(P.peek.code)}</pre></details>`;
     h += `<div class="sofar"><span class="label">THE STORY SO FAR</span><ol>${P.story.map(([t, n]) => `<li${n ? ' class="new"' : ''}>${esc(t)}</li>`).join('')}</ol></div>`;
     if (P.check) {
       h += `<div class="check" data-pass="${P.n}"><span class="label">QUICK CHECK</span><p class="q">${esc(P.check.q)}</p>`;
@@ -58,16 +59,26 @@
     h += `<div class="chapter-nav">`;
     h += idx > 0 ? `<a class="btn btn-small btn-ghost" href="#pass-${P.n - 1}">← Back</a>` : `<span></span>`;
     if (next) h += `<a class="btn btn-primary" href="#pass-${next.n}">Continue to pass ${next.n} →</a>`;
-    else h += `<a class="btn btn-primary" href="#story-end">See what's coming →</a>`;
+    else h += `<a class="btn btn-primary" href="#closing">See the whole map →</a>`;
     h += `</div>`;
     sec.innerHTML = h;
     chaptersEl.appendChild(sec);
   });
   const endMark = document.createElement('div'); endMark.id = 'story-end'; chaptersEl.appendChild(endMark);
 
-  // "coming next" list
-  const nextList = document.getElementById('nextList');
-  D.nextUp.forEach(t => { const li = document.createElement('li'); li.textContent = t; nextList.appendChild(li); });
+  // closing section and glossary
+  document.getElementById('closingHeadline').textContent = D.closing.headline;
+  document.getElementById('closingIntro').textContent = D.closing.intro;
+  document.getElementById('questions').innerHTML = D.closing.questions.map(([q, t]) => `<li><b>${esc(q)}</b>${esc(t)}</li>`).join('');
+  document.getElementById('wholeStory').innerHTML = D.closing.wholeStory.map(t => `<li>${esc(t)}</li>`).join('');
+  const glist = document.getElementById('glist'), gsearch = document.getElementById('gsearch');
+  function renderGlossary(q) {
+    q = (q || '').trim().toLowerCase();
+    const items = D.glossary.filter(([t, d]) => !q || t.toLowerCase().includes(q) || d.toLowerCase().includes(q));
+    glist.innerHTML = items.length ? items.map(([t, d]) => `<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('') : `<p class="none">No words match "${esc(q)}".</p>`;
+  }
+  gsearch.addEventListener('input', () => renderGlossary(gsearch.value));
+  renderGlossary('');
 
   document.addEventListener('click', e => {
     const link = e.target.closest('a[href^="#"]');

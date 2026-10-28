@@ -32,6 +32,7 @@
           <p class="lede">One simple story, told twelve times. Each time, we add one new piece. No tech background needed.</p>
           <div class="actions">
             <a class="btn btn-primary" href="#pass-1">Start the story →</a>
+            <a class="btn" href="#glossary">Words to know</a>
           </div>
         </div>
         <div class="hero-art" aria-hidden="true">
@@ -84,13 +85,38 @@
       </div>
     </section>
 
-    <section class="next">
-      <div class="wrap next-inner">
-        <p class="eyebrow">COMING IN STAGE 2</p>
-        <h2>Ten more passes, all the way to AI.</h2>
-        <ol class="next-list" id="nextList" start="3"></ol>
+    <section class="closing" id="closing">
+      <div class="wrap closing-inner">
+        <div class="closing-head">
+          <p class="eyebrow">THE WHOLE MAP</p>
+          <h2 id="closingHeadline"></h2>
+          <p class="lede" id="closingIntro"></p>
+        </div>
+        <div class="closing-grid">
+          <ol class="questions" id="questions"></ol>
+          <div class="sofar whole">
+            <span class="label">THE WHOLE STORY, IN ONE PLACE</span>
+            <ol id="wholeStory"></ol>
+          </div>
+        </div>
       </div>
     </section>
+
+    <section class="glossary" id="glossary">
+      <div class="wrap glossary-inner">
+        <div class="glossary-head">
+          <div>
+            <p class="eyebrow">WORDS TO KNOW</p>
+            <h2>Every term, in plain words.</h2>
+          </div>
+          <label class="search-label">Find a word
+            <input class="search" id="gsearch" type="search" placeholder="e.g. API, deploy, token" autocomplete="off">
+          </label>
+        </div>
+        <dl class="glist" id="glist"></dl>
+      </div>
+    </section>
+
   </main>
 
   <footer class="footer">

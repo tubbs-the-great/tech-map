@@ -23,7 +23,8 @@
     const r = M.regions[id];
     const g = el('g', { class: 'm-region m-hidden' }, gRegions);
     el('rect', { x: r.x, y: r.y, width: r.w, height: r.h, rx: 14 }, g);
-    el('text', { x: r.x + 14, y: r.y + 18 }, g).textContent = r.label;
+    const t = r.labelAt === 'right' ? el('text', { x: r.x + r.w - 16, y: r.y + r.h / 2 + 4, 'text-anchor': 'end' }, g) : el('text', { x: r.x + 14, y: r.y + 18 }, g);
+    t.textContent = r.label;
     regions[id] = g;
   }
   // links
