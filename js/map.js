@@ -1,8 +1,7 @@
 /* Draws the system map and animates a request travelling across it. */
-(function () {
+window.createMap = function (svg) {
   const NS = 'http://www.w3.org/2000/svg';
   const M = window.TECH_MAP.map;
-  const svg = document.getElementById('map');
   svg.setAttribute('viewBox', `0 0 ${M.width} ${M.height}`);
 
   const el = (tag, attrs, parent) => {
@@ -59,27 +58,39 @@
   const ASPECT = M.width / M.height;
   const view = { x: 0, y: 0, w: M.width, h: M.height };
   const applyView = () => svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
-  function fit(p, animate) {
+  const geom = (n, p) => ({ x: n.x, y: typeof n.y === 'function' ? n.y(p) : n.y, w: n.w, h: typeof n.h === 'function' ? n.h(p) : n.h });
+  /* frame(ids): zoom the camera to those nodes (null = everything visible) */
+  function frame(ids, animate, duration) {
+    const p = current;
     let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
     const add = (x, y, w, h) => { x1 = Math.min(x1, x); y1 = Math.min(y1, y); x2 = Math.max(x2, x + w); y2 = Math.max(y2, y + h); };
-    for (const id in M.nodes) { const n = M.nodes[id]; if (p >= n.from) { const y = typeof n.y === 'function' ? n.y(p) : n.y, h = typeof n.h === 'function' ? n.h(p) : n.h; add(n.x, y - 12, n.w, h + 12); } }
-    for (const id in M.regions) { const r = M.regions[id]; if (p >= r.from) add(r.x, r.y, r.w, r.h); }
-    const pad = 36;
-    let w = Math.max(x2 - x1 + pad * 2, 420), h = Math.max(y2 - y1 + pad * 2, 200);
+    const want = ids ? ids.filter(id => M.nodes[id] && p >= M.nodes[id].from) : null;
+    if (!want || !want.length) {
+      for (const id in M.nodes) { const n = M.nodes[id]; if (p >= n.from) { const g = geom(n, p); add(g.x, g.y - 12, g.w, g.h + 12); } }
+      for (const id in M.regions) { const r = M.regions[id]; if (p >= r.from) add(r.x, r.y, r.w, r.h); }
+    } else {
+      want.forEach(id => { const g = geom(M.nodes[id], p); add(g.x, g.y - 14, g.w, g.h + 14); });
+    }
+    const pad = want && want.length ? 44 : 36;
+    let w = Math.max(x2 - x1 + pad * 2, 400), h = Math.max(y2 - y1 + pad * 2, 200);
     const r = svg.getBoundingClientRect();
     const aspect = r.width > 0 && r.height > 0 ? r.width / r.height : ASPECT;
     if (w / h > aspect) h = w / aspect; else w = h * aspect;
     const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
     const target = { x: cx - w / 2, y: cy - h / 2, w, h };
     gsap.killTweensOf(view);
-    if (animate && !reduce()) gsap.to(view, { ...target, duration: 0.9, ease: 'power2.inOut', onUpdate: applyView });
+    if (animate && !reduce()) gsap.to(view, { ...target, duration: duration || 0.9, ease: 'power2.inOut', onUpdate: applyView });
     else { Object.assign(view, target); applyView(); }
+  }
+  let lastFrame = null;
+  function setDim(ids) {
+    for (const id in nodes) nodes[id].g.classList.toggle('dim', !!ids && !ids.includes(id));
+    for (const id in links) { const l = M.links[id]; links[id].g.classList.toggle('dim', !!ids && !(l.ends && l.ends.every(e => ids.includes(e)))); }
   }
 
   function render(p) {
     const animate = current !== 0 && p !== current;
     current = p;
-    fit(p, animate);
     for (const id in M.regions) show(regions[id], p >= M.regions[id].from);
     for (const id in M.links) {
       const l = M.links[id], e = links[id];
@@ -143,13 +154,18 @@
   const wait = ms => new Promise(r => setTimeout(r, ms));
 
   /* steps: [{link, dir, label, caption} | {node, label, caption}]; onStep(i) fires as each begins */
-  async function play(steps, onStep) {
+  async function play(steps, onStep, opts) {
+    opts = opts || {};
     stop();
     const my = token;
     for (let i = 0; i < steps.length; i++) {
       if (my !== token) return false;
       const s = steps[i];
       onStep(i, s);
+      if (opts.follow !== false) {
+        const ids = s.node ? [s.node].concat(opts.rest || []) : (M.links[s.link].ends || null);
+        frame(s.node ? (opts.rest && opts.rest.includes(s.node) ? opts.rest : ids) : ids, true, 0.7);
+      }
       if (s.node) {
         nodes[s.node].g.classList.add('pulse');
         await wait(reduce() ? 900 : 1200);
@@ -173,11 +189,13 @@
       L.path.classList.remove('active');
     }
     show(packet, false); show(halo, false);
+    if (my === token && opts.rest && opts.follow !== false) frame(opts.rest, true, 0.9);
     return my === token;
   }
 
   let resizeTimer;
-  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (current) fit(current, false); }, 150); });
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (current) frame(lastFrame, false); }, 150); });
+  const frameAndRemember = (ids, animate, duration) => { lastFrame = ids; frame(ids, animate, duration); };
 
-  window.MAP = { render, play, stop, setFocus, setSelected, flash, nodes: () => nodes, isVisible: id => current >= M.nodes[id].from };
-})();
+  return { render, play, stop, frame: frameAndRemember, setDim, setFocus, setSelected, flash, nodes: () => nodes, isVisible: id => current >= M.nodes[id].from };
+};

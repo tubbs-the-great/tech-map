@@ -132,7 +132,7 @@ button { font: inherit; cursor: pointer; }
 
 /* story: sticky stage + chapters */
 .story { background: var(--surface-card); }
-.story-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 56px; align-items: start; padding-block: 56px 80px; }
+.story-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 56px; align-items: start; padding-block: 56px 80px; }
 .stage-col { position: sticky; top: calc(var(--topbar-h) + 20px); min-width: 0; }
 .stage {
   border: 1px solid var(--line); border-radius: var(--radius-xl); overflow: hidden;
@@ -172,8 +172,8 @@ button { font: inherit; cursor: pointer; }
 .m-node.pulse rect.box { stroke: var(--navy); stroke-width: 3; }
 .m-node.right rect.box { stroke: var(--good) !important; stroke-width: 3; }
 .m-node.wrong rect.box { stroke: var(--bad) !important; stroke-width: 3; }
-.m-node .title { font-family: var(--sans); font-size: 15px; font-weight: 500; fill: var(--navy); text-anchor: middle; }
-.m-node .sub { font-family: var(--mono); font-size: 11px; fill: var(--subtle); text-anchor: middle; }
+.m-node .title { font-family: var(--sans); font-size: 16px; font-weight: 500; fill: var(--navy); text-anchor: middle; }
+.m-node .sub { font-family: var(--mono); font-size: 11.5px; fill: var(--subtle); text-anchor: middle; }
 .m-node.hub .title { fill: var(--on-navy); }
 .m-node.hub .sub { fill: var(--on-navy-muted); }
 .m-node.compact .title { font-size: 13px; }
@@ -186,6 +186,12 @@ button { font: inherit; cursor: pointer; }
 .m-packet { fill: var(--navy); }
 .m-halo { fill: var(--navy); opacity: .14; }
 .m-hidden { display: none; }
+.m-node.dim, .m-link.dim, g.dim { opacity: .35; transition: opacity .4s; }
+.m-node, .m-link, .m-link + * { transition: opacity .4s; }
+.fullmap { background-color: var(--surface-page); background-image: linear-gradient(var(--grid-dot) 1px, transparent 1px), linear-gradient(90deg, var(--grid-dot) 1px, transparent 1px); background-size: 28px 28px; border: 1px solid var(--line); border-radius: var(--radius-xl); padding: 16px; }
+.fullmap svg { display: block; width: 100%; height: auto; }
+.fullmap-def { font-size: 15px; color: var(--ink-body); min-height: 1.5em; padding: 10px 4px 0; }
+.fullmap-def b { color: var(--navy); }
 
 /* chapters */
 .chapters { display: flex; flex-direction: column; gap: 0; min-width: 0; }

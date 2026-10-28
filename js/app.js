@@ -1,6 +1,8 @@
 /* The scroll story: chapters on the right drive the sticky map on the left. */
 (function () {
-  const D = window.TECH_MAP, MAP = window.MAP;
+  const D = window.TECH_MAP;
+  const MAP = window.createMap(document.getElementById('map'));
+  const FULL = window.createMap(document.getElementById('mapFull'));
   const passes = D.passes;
   const defs = {
     client: '<b>Your device.</b> The one doing the asking: your phone or laptop. Also called the client.',
@@ -66,6 +68,17 @@
   });
   const endMark = document.createElement('div'); endMark.id = 'story-end'; chaptersEl.appendChild(endMark);
 
+  // the whole map, full size
+  FULL.render(D.totalPasses);
+  FULL.frame(null, false);
+  const fullDef = document.getElementById('fullDef');
+  const fullNodes = FULL.nodes();
+  for (const id in fullNodes) {
+    const pick = () => { FULL.setSelected(id); fullDef.innerHTML = defs[id] || ''; };
+    fullNodes[id].g.addEventListener('click', pick);
+    fullNodes[id].g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+  }
+
   // closing section and glossary
   document.getElementById('closingHeadline').textContent = D.closing.headline;
   document.getElementById('closingIntro').textContent = D.closing.intro;
@@ -91,6 +104,15 @@
     history.replaceState(null, '', link.getAttribute('href'));
   });
 
+  // the boxes each pass is about: what the camera frames at rest
+  const involved = {};
+  passes.forEach(P => {
+    const ids = new Set();
+    P.steps.forEach(s => { if (s.node) ids.add(s.node); if (s.link) (D.map.links[s.link].ends || []).forEach(e => ids.add(e)); });
+    if (P.check && P.check.node) ids.add(P.check.node);
+    involved[P.n] = [...ids];
+  });
+
   // ---- state ----
   let cur = 0;
   const checks = {};
@@ -113,7 +135,8 @@
     cur = n;
     const P = passes[n - 1];
     MAP.render(n);
-    MAP.setFocus(P.check && P.check.node ? null : null);
+    MAP.frame(involved[n], true);
+    MAP.setDim(involved[n]);
     renderSteps(P);
     setProgress(n);
     defEl.innerHTML = 'Tap any box on the map to see what it is.';
@@ -140,10 +163,11 @@
     replayBtn.disabled = true; replayBtn.classList.add('playing'); replayText.textContent = 'Playing';
     const items = [...stepsEl.children];
     items.forEach(li => li.classList.remove('active', 'done'));
+    MAP.setDim(involved[cur]);
     const ok = await MAP.play(P.steps, (i, s) => {
       items.forEach((li, j) => { li.classList.toggle('active', j === i); li.classList.toggle('done', j < i); });
       caption.textContent = `STEP ${i + 1} OF ${P.steps.length} · ${s.caption}`;
-    });
+    }, { rest: involved[cur] });
     if (ok) {
       items.forEach(li => { li.classList.remove('active'); li.classList.add('done'); });
       caption.textContent = `PASS ${cur} · ${P.title} · done`;
@@ -153,6 +177,7 @@
     replayBtn.disabled = false; replayBtn.classList.remove('playing'); replayText.textContent = '↻ Play it again';
   }
   replayBtn.addEventListener('click', playCurrent);
+  document.getElementById('wholeMap').addEventListener('click', () => { MAP.stop(); replayBtn.disabled = false; replayBtn.classList.remove('playing'); replayText.textContent = '▶ Play the request'; MAP.setDim(null); MAP.frame(null, true); });
 
   // don't start the animation until the page has stopped moving
   let settleTimer = null, pendingPlay = false;

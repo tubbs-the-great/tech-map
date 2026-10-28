@@ -76,6 +76,7 @@
             </div>
             <div class="stage-foot">
               <button class="btn btn-primary btn-small btn-play" id="replay" type="button"><span id="replayText">▶ Play the request</span></button>
+              <button class="btn btn-small btn-ghost" id="wholeMap" type="button">Whole map</button>
               <ol class="stage-steps" id="stageSteps"></ol>
             </div>
             <p class="stage-def" id="stageDef" aria-live="polite">Tap any box on the map to see what it is.</p>
@@ -91,6 +92,10 @@
           <p class="eyebrow">THE WHOLE MAP</p>
           <h2 id="closingHeadline"></h2>
           <p class="lede" id="closingIntro"></p>
+        </div>
+        <div class="fullmap">
+          <svg id="mapFull" role="img" aria-label="The whole system map"></svg>
+          <p class="fullmap-def" id="fullDef">Tap any box to see what it is.</p>
         </div>
         <div class="closing-grid">
           <ol class="questions" id="questions"></ol>

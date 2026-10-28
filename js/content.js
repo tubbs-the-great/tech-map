@@ -32,16 +32,16 @@ window.TECH_MAP = {
       github: { from: 9,  x: 370, y: 562, w: 130, h: 52, title: () => 'GitHub', sub: () => 'stores the code', compact: true }
     },
     links: {
-      c_s:     { from: 1,  d: 'M 190 295 L 300 295', label: p => p >= 6 ? 'HTTP' : '', lx: 245, ly: 284 },
-      s_db:    { from: 4,  d: 'M 390 352 L 390 430' },
-      s_api:   { from: 7,  d: 'M 480 262 C 565 262, 565 86, 650 86' },
-      ph_s:    { from: 8,  d: 'M 190 424 C 245 424, 245 336, 300 336' },
-      c_dns:   { from: 10, d: 'M 115 250 C 115 168, 130 137, 160 137' },
-      s_ai:    { from: 11, d: 'M 480 290 C 565 290, 565 216, 650 216' },
-      s_tools: { from: 11, d: 'M 480 340 C 565 340, 565 452, 650 452', dashed: true },
-      ag_lap:  { from: 12, d: 'M 170 588 L 200 588' },
-      lap_gh:  { from: 9,  d: 'M 340 588 L 370 588' },
-      gh_cloud:{ from: 10, d: 'M 435 562 L 435 524' }
+      c_s:     { from: 1,  ends: ['client','server'], d: 'M 190 295 L 300 295', label: p => p >= 6 ? 'HTTP' : '', lx: 245, ly: 284 },
+      s_db:    { from: 4,  ends: ['server','db'], d: 'M 390 352 L 390 430' },
+      s_api:   { from: 7,  ends: ['server','api'], d: 'M 480 262 C 565 262, 565 86, 650 86' },
+      ph_s:    { from: 8,  ends: ['phone','server'], d: 'M 190 424 C 245 424, 245 336, 300 336' },
+      c_dns:   { from: 10, ends: ['client','dns'], d: 'M 115 250 C 115 168, 130 137, 160 137' },
+      s_ai:    { from: 11, ends: ['server','ai'], d: 'M 480 290 C 565 290, 565 216, 650 216' },
+      s_tools: { from: 11, ends: ['server','tools'], d: 'M 480 340 C 565 340, 565 452, 650 452', dashed: true },
+      ag_lap:  { from: 12, ends: ['agent','laptop'], d: 'M 170 588 L 200 588' },
+      lap_gh:  { from: 9,  ends: ['laptop','github'], d: 'M 340 588 L 370 588' },
+      gh_cloud:{ from: 10, ends: ['github','db'], d: 'M 435 562 L 435 524' }
     },
     regions: {
       cloud: { from: 10, x: 280, y: 196, w: 220, h: 328, label: 'THE CLOUD' },
