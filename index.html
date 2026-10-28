@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=6">
+  <link rel="stylesheet" href="css/styles.css?v=7">
 </head>
 <body>
   <a class="skip" href="#story">Skip to the story</a>
@@ -65,21 +65,16 @@
       <div class="wrap story-grid">
         <div class="stage-col">
           <div class="stage" id="stage">
-            <div class="stage-head">
-              <span class="stage-caption" id="stageCaption">STEP 1 OF 2 · YOU ASK FOR A PAGE</span>
-            </div>
+            <div class="stage-head"><span class="stage-caption js-caption"></span></div>
             <div class="stage-map">
-              <svg id="map" role="img" aria-labelledby="mapTitle mapDesc">
-                <title id="mapTitle">The system map</title>
-                <desc id="mapDesc">A diagram that grows with each pass, showing how the parts of an app connect.</desc>
-              </svg>
+              <svg class="js-map" role="img" aria-label="The system map, which grows with each pass"></svg>
             </div>
             <div class="stage-foot">
-              <button class="btn btn-primary btn-small btn-play" id="replay" type="button"><span id="replayText">▶ Play the request</span></button>
-              <button class="btn btn-small btn-ghost" id="wholeMap" type="button">Whole map</button>
-              <ol class="stage-steps" id="stageSteps"></ol>
+              <button class="btn btn-primary btn-small btn-play js-play" type="button"><span class="js-playText">▶ Play the request</span></button>
+              <button class="btn btn-small btn-ghost js-whole" type="button">Whole map</button>
+              <ol class="stage-steps js-steps"></ol>
             </div>
-            <p class="stage-def" id="stageDef" aria-live="polite">Tap any box on the map to see what it is.</p>
+            <p class="stage-def js-def" aria-live="polite">Tap any box on the map to see what it is.</p>
           </div>
         </div>
         <div class="chapters" id="chapters"></div>
@@ -130,8 +125,8 @@
 
   <script src="js/vendor/gsap.min.js"></script>
   <script src="js/vendor/ScrollTrigger.min.js"></script>
-  <script src="js/content.js?v=6"></script>
-  <script src="js/map.js?v=6"></script>
-  <script src="js/app.js?v=6"></script>
+  <script src="js/content.js?v=7"></script>
+  <script src="js/map.js?v=7"></script>
+  <script src="js/app.js?v=7"></script>
 </body>
 </html>
