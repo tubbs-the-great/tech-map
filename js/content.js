@@ -17,7 +17,7 @@ window.TECH_MAP = {
         title: p => p < 2 ? 'You' : 'Your device',
         sub: p => p < 2 ? 'your browser' : 'the client',
         chips: p => p >= 3 ? ['HTML · CSS · JS'] : [] },
-      server: { from: 1, x: 300, y: 236, w: 180, h: 128, kind: 'hub',
+      server: { from: 1, x: 300, y: p => 295 - (p >= 5 ? 64 : p >= 3 ? 52 : 43), w: 180, h: p => p >= 5 ? 128 : p >= 3 ? 104 : 86, kind: 'hub',
         title: p => p < 2 ? 'The internet' : 'A server',
         sub: p => p < 2 ? 'where things come from' : 'another computer',
         chips: p => [].concat(p >= 3 ? ['Back-end code'] : [], p >= 5 ? ['Framework'] : []) },
@@ -33,7 +33,7 @@ window.TECH_MAP = {
     },
     links: {
       c_s:     { from: 1,  d: 'M 190 295 L 300 295', label: p => p >= 6 ? 'HTTP' : '', lx: 245, ly: 284 },
-      s_db:    { from: 4,  d: 'M 390 364 L 390 430' },
+      s_db:    { from: 4,  d: 'M 390 352 L 390 430' },
       s_api:   { from: 7,  d: 'M 480 262 C 565 262, 565 86, 650 86' },
       ph_s:    { from: 8,  d: 'M 190 424 C 245 424, 245 336, 300 336' },
       c_dns:   { from: 10, d: 'M 115 250 C 115 168, 130 137, 160 137' },
