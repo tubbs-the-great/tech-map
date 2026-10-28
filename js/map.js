@@ -82,6 +82,18 @@ window.createMap = function (svg) {
     if (animate && !reduce()) gsap.to(view, { ...target, duration: duration || 0.9, ease: 'power2.inOut', onUpdate: applyView });
     else { Object.assign(view, target); applyView(); }
   }
+  /* frameSmart: frame ids, unless that would zoom out too far; then frame the fallback */
+  function spanOf(ids) {
+    const p = current; let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+    ids.forEach(id => { const n = M.nodes[id]; if (n && p >= n.from) { const g = geom(n, p); x1 = Math.min(x1, g.x); y1 = Math.min(y1, g.y); x2 = Math.max(x2, g.x + g.w); y2 = Math.max(y2, g.y + g.h); } });
+    return { w: x2 - x1, h: y2 - y1 };
+  }
+  function frameSmart(ids, fallback, animate, duration) {
+    const s = ids ? spanOf(ids) : { w: Infinity, h: Infinity };
+    const tooWide = s.w > 520 || s.h > 380;
+    const pick = tooWide && fallback && fallback.length ? fallback : ids;
+    lastFrame = pick; frame(pick, animate, duration);
+  }
   let lastFrame = null;
   function setDim(ids) {
     for (const id in nodes) nodes[id].g.classList.toggle('dim', !!ids && !ids.includes(id));
@@ -189,7 +201,11 @@ window.createMap = function (svg) {
       L.path.classList.remove('active');
     }
     show(packet, false); show(halo, false);
-    if (my === token && opts.rest && opts.follow !== false) frame(opts.rest, true, 0.9);
+    if (my === token && opts.rest && opts.follow !== false) {
+      const last = steps[steps.length - 1];
+      const lastIds = last.node ? [last.node] : (M.links[last.link].ends || null);
+      frameSmart(opts.rest, lastIds, true, 0.9);
+    }
     return my === token;
   }
 
@@ -197,5 +213,5 @@ window.createMap = function (svg) {
   window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (current) frame(lastFrame, false); }, 150); });
   const frameAndRemember = (ids, animate, duration) => { lastFrame = ids; frame(ids, animate, duration); };
 
-  return { render, play, stop, frame: frameAndRemember, setDim, setFocus, setSelected, flash, nodes: () => nodes, isVisible: id => current >= M.nodes[id].from };
+  return { render, play, stop, frame: frameAndRemember, frameSmart, setDim, setFocus, setSelected, flash, nodes: () => nodes, isVisible: id => current >= M.nodes[id].from };
 };

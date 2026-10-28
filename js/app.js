@@ -135,7 +135,8 @@
     cur = n;
     const P = passes[n - 1];
     MAP.render(n);
-    MAP.frame(involved[n], true);
+    const first = P.steps[0];
+    MAP.frameSmart(involved[n], first.node ? [first.node] : (D.map.links[first.link].ends || null), true);
     MAP.setDim(involved[n]);
     renderSteps(P);
     setProgress(n);
