@@ -299,12 +299,31 @@
 
   /* end + glossary */
   const FULL = window.createMap($('mapFull'));
-  let fullReady = false;
+  let fullReady = false, assembling = 0;
   function openEnd() {
     showView('end');
-    if (!fullReady) { FULL.render(TOTAL); FULL.frame(null, false); fullReady = true; }
-    else FULL.frame(null, false);
     renderProgress();
+    const justFinished = !fullReady;
+    if (!fullReady) { fullReady = true; }
+    if (justFinished && !reduce()) assemble(); else { FULL.render(TOTAL); FULL.frame(null, false); }
+    $('closingEyebrow').textContent = 'DONE · 12 OF 12'; $('closingEyebrow').classList.add('done');
+    $('closingHeadline').textContent = "You've got the whole map.";
+    $('closingIntro').textContent = D.closing.headline + ' ' + D.closing.intro;
+  }
+  // the whole map builds itself one pass at a time, the way it did for you
+  function assemble() {
+    const my = ++assembling;
+    let p = 1;
+    FULL.render(TOTAL); FULL.frame(null, false);   // camera on the whole map
+    FULL.render(1);                                 // then start with the first two boxes
+    const step = () => {
+      if (my !== assembling) return;
+      p++;
+      if (p > TOTAL) return;
+      FULL.render(p);
+      setTimeout(step, 480);
+    };
+    setTimeout(step, 600);
   }
   const fullDef = $('fullDef'), fullNodes = FULL.nodes();
   for (const id in fullNodes) {
@@ -312,8 +331,9 @@
     fullNodes[id].g.addEventListener('click', pick);
     fullNodes[id].g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
   }
-  $('closingHeadline').textContent = D.closing.headline;
-  $('closingIntro').textContent = D.closing.intro;
+  $('builtHeadline').textContent = D.built.headline;
+  $('builtParas').innerHTML = D.built.paras.map(t => `<p>${esc(t)}</p>`).join('');
+  const bl = $('builtLink'); bl.href = D.built.link; bl.textContent = D.built.linkLabel;
   $('questions').innerHTML = D.closing.questions.map(([q, t]) => `<li><b>${esc(q)}</b>${esc(t)}</li>`).join('');
   $('wholeStory').innerHTML = D.closing.wholeStory.map(t => `<li>${esc(t)}</li>`).join('');
   const glist = $('glist'), gsearch = $('gsearch');

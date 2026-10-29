@@ -1,3 +1,6 @@
+@font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("../fonts/GeistMono-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+
 /* Tech Map design system — tokens */
 :root {
   --navy: #0B1749;
@@ -277,6 +280,19 @@ button { font: inherit; cursor: pointer; }
 .sofar.whole { background: var(--surface-card); }
 .sofar.whole li { color: var(--ink-body); }
 
+/* how this was built */
+.built { border-top: 1px solid var(--line); padding-top: 48px; display: flex; flex-direction: column; gap: 18px; }
+.built h2 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.06; max-width: 640px; }
+.built-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+.built-grid .prose { font-size: 17px; max-width: 60ch; }
+.built-aside { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-card); padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+.built-aside .label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--subtle); }
+.built-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.45; color: var(--ink-body); }
+.built-steps li::marker { font-family: var(--mono); font-size: 12px; color: var(--navy-600); }
+.built-steps b { color: var(--navy); }
+.built-aside .btn { align-self: flex-start; margin-top: 4px; }
+.closing-head .eyebrow.done { color: var(--good); }
+
 /* glossary */
 .glossary { background: var(--surface-card); border-top: 1px solid var(--line); }
 .glossary-inner { padding-block: 64px 80px; display: flex; flex-direction: column; gap: 28px; }
@@ -303,7 +319,7 @@ button { font: inherit; cursor: pointer; }
   .stage { height: auto; max-height: none; }
   .stage-map { min-height: 0; height: min(72vw, 420px); display: block; }
   .card { overflow: visible; padding-right: 0; }
-  .closing-grid { grid-template-columns: minmax(0, 1fr); }
+  .closing-grid, .built-grid { grid-template-columns: minmax(0, 1fr); }
   .progress-label { display: none; }
   .toplink { display: none; }
 }

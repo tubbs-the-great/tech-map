@@ -428,6 +428,17 @@ window.TECH_MAP = {
     ]
   },
 
+  built: {
+    headline: 'This site was built the way it teaches.',
+    paras: [
+      'Every word and every line of code here was written by an AI, directed by a person. The design was chosen from mock-ups on a canvas, recorded as a small design system, and then built by an AI coding agent in a plain project folder.',
+      'That project lives on GitHub. Each change was saved as a commit, with a note saying what changed and why, and pushed to a server that serves it to you. Which is to say: a client asked, DNS found the server, and this page came back. The map at the top of this screen is the map of this site.',
+      'You can read the whole trail. Every commit is public, and it includes the fixes: the map that was too small, the scrolling that felt wrong, the quiz question that trapped people. That is what building with AI looks like.'
+    ],
+    link: 'https://github.com/tubbs-the-great/tech-map/commits/main',
+    linkLabel: 'Read the commit history on GitHub →'
+  },
+
   glossary: [
     ['Agent', 'An AI that keeps working step by step, using tools, until a task is done.'],
     ['AI model', 'The program that writes AI replies. Trained on huge amounts of text to predict what comes next.'],

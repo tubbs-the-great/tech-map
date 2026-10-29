@@ -4,11 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>When the Code Writes Itself</title>
-  <meta name="description" content="How apps and AI actually work. One simple story, told twelve times, with a map that grows as you read.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=13">
+  <meta name="description" content="How apps and AI actually work. One simple story, told twelve times, with a map that grows as you go. No tech background needed.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="When the Code Writes Itself">
+  <meta property="og:description" content="How apps and AI actually work. One simple story, told twelve times. 15 minutes, no tech background needed.">
+  <meta property="og:image" content="https://tubbs-the-great.github.io/tech-map/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://tubbs-the-great.github.io/tech-map/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="When the Code Writes Itself">
+  <meta name="twitter:description" content="How apps and AI actually work. One simple story, told twelve times. 15 minutes, no tech background needed.">
+  <meta name="twitter:image" content="https://tubbs-the-great.github.io/tech-map/og.png">
+  <meta name="theme-color" content="#0B1749">
+  <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/styles.css?v=15">
 </head>
 <body>
   <a class="skip" href="#story">Skip to the story</a>
@@ -89,7 +101,7 @@
       <div class="closing">
         <div class="wrap closing-inner">
           <div class="closing-head">
-            <p class="eyebrow">THE WHOLE MAP</p>
+            <p class="eyebrow" id="closingEyebrow">THE WHOLE MAP</p>
             <h2 id="closingHeadline"></h2>
             <p class="lede" id="closingIntro"></p>
           </div>
@@ -105,8 +117,27 @@
             </div>
           </div>
           <div class="actions">
-            <a class="btn btn-primary" href="#glossary">Browse the words to know →</a>
-            <a class="btn" href="#pass-1">Read it again from pass 1</a>
+            <a class="btn btn-primary" href="cheatsheet.html" target="_blank" rel="noopener">Print the one-page cheat sheet →</a>
+            <a class="btn" href="#glossary">Browse the words to know</a>
+            <a class="btn btn-ghost" href="#pass-1">Read it again from pass 1</a>
+          </div>
+          <div class="built" id="built">
+            <p class="eyebrow">HOW THIS WAS BUILT</p>
+            <h2 id="builtHeadline"></h2>
+            <div class="built-grid">
+              <div class="prose" id="builtParas"></div>
+              <aside class="built-aside">
+                <span class="label">THE TRAIL</span>
+                <ol class="built-steps">
+                  <li><b>Design</b> chosen from three directions on a canvas</li>
+                  <li><b>Design system</b> recorded: navy, Geist, the map style, plain-words rules</li>
+                  <li><b>Built</b> by an AI coding agent, commit by commit</li>
+                  <li><b>Pushed to GitHub</b>, deployed to GitHub Pages</li>
+                  <li><b>Reviewed</b> at three screen sizes and fixed, in the open</li>
+                </ol>
+                <a class="btn btn-small" id="builtLink" href="#" target="_blank" rel="noopener"></a>
+              </aside>
+            </div>
           </div>
         </div>
       </div>
@@ -143,8 +174,8 @@
   </footer>
 
   <script src="js/vendor/gsap.min.js"></script>
-  <script src="js/content.js?v=13"></script>
-  <script src="js/map.js?v=13"></script>
-  <script src="js/app.js?v=13"></script>
+  <script src="js/content.js?v=15"></script>
+  <script src="js/map.js?v=15"></script>
+  <script src="js/app.js?v=15"></script>
 </body>
 </html>
