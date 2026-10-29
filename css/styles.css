@@ -158,7 +158,10 @@ button { font: inherit; cursor: pointer; }
 .panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 14px; }
 .panel-head { display: flex; flex-direction: column; gap: 6px; flex: none; }
 .chapter-title { font-family: var(--mono); font-size: 13px; color: var(--navy-600); }
-.card { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; padding-right: 6px; outline: none; }
+.card { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding-right: 6px; outline: none; }
+.card .prose-p { font-size: 18px; line-height: 1.6; color: var(--ink-body); }
+.card .prose-p strong { color: var(--navy); font-weight: 600; }
+.card h2 + .prose-p { margin-top: 4px; }
 .card.enter { animation: cardIn .35s ease; }
 @keyframes cardIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .card h2 { font-size: clamp(30px, 3.2vw, 42px); line-height: 1.06; }
@@ -305,6 +308,13 @@ details.peek pre { margin: 0; padding: 4px 16px 16px; overflow-x: auto; font-fam
   .lede { font-size: 18px; }
   .stage-map { height: min(82vw, 420px); }
   .prose { font-size: 17px; }
+}
+@media (min-width: 961px) and (max-height: 760px) {
+  .card h2 { font-size: clamp(26px, 2.8vw, 34px); }
+  .card .prose-p { font-size: 16.5px; line-height: 1.5; }
+  .card { gap: 14px; }
+  .words p, .sofar li { font-size: 14.5px; }
+  .lesson-grid { padding-block: 12px 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .btn, .m-link, .m-node rect.box, .progress-bar li { transition: none; }

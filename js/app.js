@@ -134,33 +134,50 @@
     nodes[id].g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
   }
 
-  /* ---------- cards: a pass's text in short screens ---------- */
-  function buildCards(P) {
-    const words = t => t.replace(/<[^>]+>/g, '').split(/\s+/).length;
-    const intro = [], rest = [];
-    let count = 0;
-    P.body.forEach(t => { if (!rest.length && (intro.length === 0 || count + words(t) <= 100)) { intro.push(t); count += words(t); } else rest.push(t); });
-    const out = [];
-    out.push(`<h2>${P.headline}</h2><div class="prose">${intro.map(t => `<p>${t}</p>`).join('')}</div>`);
-    let second = '';
-    if (rest.length) second += `<div class="prose">${rest.map(t => `<p>${t}</p>`).join('')}</div>`;
-    if (P.words && P.words.length) second += `<div class="words"><span class="label">WORDS TO KNOW</span>${P.words.map(([t, d]) => `<p><strong>${esc(t)}</strong> · ${esc(d)}</p>`).join('')}</div>`;
-    if (P.peek) second += `<details class="peek"><summary>${esc(P.peek.label)}</summary><pre>${esc(P.peek.code)}</pre></details>`;
-    if (second) { if (!rest.length && count <= 60) out[0] += second; else out.push(second); }
-    let last = `<div class="sofar"><span class="label">THE STORY SO FAR</span><ol>${P.story.map(([t, n]) => `<li${n ? ' class="new"' : ''}>${esc(t)}</li>`).join('')}</ol></div>`;
+  /* ---------- cards: fill each card to the space available ---------- */
+  function buildBlocks(P) {
+    const blocks = [];
+    blocks.push({ html: `<h2>${P.headline}</h2>`, keep: true });
+    P.body.forEach(t => blocks.push({ html: `<p class="prose-p">${t}</p>` }));
+    if (P.words && P.words.length) blocks.push({ html: `<div class="words"><span class="label">WORDS TO KNOW</span>${P.words.map(([t, d]) => `<p><strong>${esc(t)}</strong> · ${esc(d)}</p>`).join('')}</div>` });
+    if (P.peek) blocks.push({ html: `<details class="peek"><summary>${esc(P.peek.label)}</summary><pre>${esc(P.peek.code)}</pre></details>` });
+    blocks.push({ html: `<div class="sofar"><span class="label">THE STORY SO FAR</span><ol>${P.story.map(([t, n]) => `<li${n ? ' class="new"' : ''}>${esc(t)}</li>`).join('')}</ol></div>` });
     if (P.check) {
-      last += `<div class="check" data-pass="${P.n}"><span class="label">QUICK CHECK · OPTIONAL</span><p class="q">${esc(P.check.q)}</p>`;
-      if (P.check.options) last += `<div class="options">${P.check.options.map((o, i) => `<button type="button" class="option" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
-      else last += `<p class="hint">Answer by tapping a box on the map.</p>`;
-      last += `<p class="feedback" aria-live="polite"></p></div>`;
+      let h = `<div class="check" data-pass="${P.n}"><span class="label">QUICK CHECK · OPTIONAL</span><p class="q">${esc(P.check.q)}</p>`;
+      if (P.check.options) h += `<div class="options">${P.check.options.map((o, i) => `<button type="button" class="option" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
+      else h += `<p class="hint">Answer by tapping a box on the map.</p>`;
+      h += `<p class="feedback" aria-live="polite"></p></div>`;
+      blocks.push({ html: h });
     }
-    out.push(last);
-    return out;
+    return blocks;
+  }
+  // lay the blocks into the real card and start a new card only when the next block would overflow
+  function paginate(blocks) {
+    const limit = cardEl.clientHeight;
+    const pages = [];
+    let page = [];
+    cardEl.innerHTML = '';
+    const fits = () => cardEl.scrollHeight <= limit + 2;
+    blocks.forEach((b, i) => {
+      cardEl.insertAdjacentHTML('beforeend', b.html);
+      if (limit > 0 && !fits() && page.length) {
+        // move this block (and a heading kept with it) to a new page
+        let carry = [b];
+        cardEl.lastElementChild.remove();
+        if (page.length && page[page.length - 1].keep) { carry.unshift(page.pop()); cardEl.lastElementChild.remove(); }
+        pages.push(page);
+        page = [];
+        cardEl.innerHTML = carry.map(c => c.html).join('');
+        page.push(...carry);
+      } else page.push(b);
+    });
+    if (page.length) pages.push(page);
+    return pages.map(p => p.map(b => b.html).join(''));
   }
 
   /* ---------- views ---------- */
   const views = { home: $('view-home'), lesson: $('view-lesson'), end: $('view-end'), glossary: $('view-glossary') };
-  let view = 'home', cur = 0, cards = [], cardIndex = 0, beforeGlossary = '#home';
+  let view = 'home', cur = 0, cards = [], blocks = [], cardIndex = 0, beforeGlossary = '#home';
   function showView(name) {
     for (const k in views) views[k].hidden = k !== name;
     view = name;
@@ -210,7 +227,8 @@
     showView('lesson');
     $('passEyebrow').textContent = `PASS ${n} OF ${TOTAL}`;
     $('passTitle').textContent = P.title;
-    cards = buildCards(P);
+    blocks = buildBlocks(P);
+    cards = paginate(blocks);
     stageShow(n);
     renderProgress();
     showCard(cardAt || 0);
@@ -253,6 +271,18 @@
     const i = +btn.dataset.i;
     box.querySelectorAll('.option').forEach(b => { b.disabled = true; if (+b.dataset.i === c.answer) b.classList.add('right'); else if (+b.dataset.i === i) b.classList.add('wrong'); });
     box.querySelector('.feedback').innerHTML = (i === c.answer ? '<b class="good">Right.</b> ' : '<b class="bad">Not quite.</b> ') + esc(c.why);
+  });
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (view !== 'lesson' || !blocks.length) return;
+      const firstHtml = (cards[cardIndex] || '').slice(0, 40);
+      cards = paginate(blocks);
+      const k = Math.max(0, cards.findIndex(c => c.startsWith(firstHtml)));
+      showCard(k);
+    }, 200);
   });
 
   /* end + glossary */
