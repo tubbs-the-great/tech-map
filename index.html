@@ -8,32 +8,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=9">
+  <link rel="stylesheet" href="css/styles.css?v=10">
 </head>
 <body>
   <a class="skip" href="#story">Skip to the story</a>
 
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <a class="brand" href="#top">When the Code Writes Itself</a>
+      <a class="brand" href="#home">When the Code Writes Itself</a>
       <div class="progress" aria-label="Your progress">
-        <span class="progress-label" id="progressLabel">PASS 1 / 12</span>
+        <span class="progress-label" id="progressLabel"></span>
         <ol class="progress-bar" id="progressBar"></ol>
       </div>
+      <a class="toplink" href="#glossary">Words to know</a>
     </div>
   </header>
 
-  <main id="top">
-    <section class="hero dots">
+  <main>
+    <section class="view hero dots" id="view-home">
       <div class="wrap hero-inner">
         <div class="hero-copy">
           <p class="eyebrow">12 short passes · 15 minutes</p>
           <h1>How apps and AI actually work.</h1>
           <p class="lede">One simple story, told twelve times. Each time, we add one new piece. No tech background needed.</p>
-          <div class="actions">
-            <a class="btn btn-primary" href="#pass-1">Start the story →</a>
-            <a class="btn" href="#glossary">Words to know</a>
-          </div>
+          <div class="actions" id="homeActions"></div>
         </div>
         <div class="hero-art" aria-hidden="true">
           <div class="hero-card">
@@ -61,62 +59,74 @@
       </div>
     </section>
 
-    <section class="story" id="story" aria-label="The story">
-      <div class="wrap story-grid">
-        <div class="stage-col">
-          <div class="stage" id="stage">
-            <div class="stage-head"><span class="stage-caption js-caption"></span></div>
-            <div class="stage-map">
-              <svg class="js-map" role="group" aria-label="The system map, which grows with each pass"></svg>
-            </div>
-            <div class="stage-foot">
-              <button class="btn btn-primary btn-small btn-play js-play" type="button"><span class="js-playText">▶ Play the request</span></button>
-              <button class="btn btn-small btn-ghost js-whole" type="button">Whole map</button>
-              <ol class="stage-steps js-steps"></ol>
-            </div>
-            <p class="stage-def js-def" aria-live="polite">Tap any box on the map to see what it is.</p>
+    <section class="view lesson" id="view-lesson" hidden>
+      <div class="wrap lesson-grid">
+        <div class="stage" id="stage">
+          <div class="stage-head"><span class="stage-caption js-caption"></span></div>
+          <div class="stage-map"><svg class="js-map" role="group" aria-label="The system map, which grows with each pass"></svg></div>
+          <div class="stage-foot">
+            <button class="btn btn-primary btn-small btn-play js-play" type="button"><span class="js-playText">▶ Play the request</span></button>
+            <button class="btn btn-small btn-ghost js-whole" type="button">Whole map</button>
+            <ol class="stage-steps js-steps"></ol>
           </div>
+          <p class="stage-def js-def" aria-live="polite">Tap any box on the map to see what it is.</p>
         </div>
-        <div class="chapters" id="chapters"></div>
-      </div>
-    </section>
-
-    <section class="closing" id="closing">
-      <div class="wrap closing-inner">
-        <div class="closing-head">
-          <p class="eyebrow">THE WHOLE MAP</p>
-          <h2 id="closingHeadline"></h2>
-          <p class="lede" id="closingIntro"></p>
-        </div>
-        <div class="fullmap">
-          <svg id="mapFull" role="group" aria-label="The whole system map"></svg>
-          <p class="fullmap-def" id="fullDef">Tap any box to see what it is.</p>
-        </div>
-        <div class="closing-grid">
-          <ol class="questions" id="questions"></ol>
-          <div class="sofar whole">
-            <span class="label">THE WHOLE STORY, IN ONE PLACE</span>
-            <ol id="wholeStory"></ol>
+        <div class="panel">
+          <div class="panel-head">
+            <span class="eyebrow" id="passEyebrow"></span>
+            <span class="chapter-title" id="passTitle"></span>
+          </div>
+          <div class="card" id="card" tabindex="-1"></div>
+          <div class="panel-foot">
+            <ol class="dots" id="cardDots" aria-label="Steps in this pass"></ol>
+            <div class="panel-nav" id="panelNav"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="glossary" id="glossary">
+    <section class="view" id="view-end" hidden>
+      <div class="closing">
+        <div class="wrap closing-inner">
+          <div class="closing-head">
+            <p class="eyebrow">THE WHOLE MAP</p>
+            <h2 id="closingHeadline"></h2>
+            <p class="lede" id="closingIntro"></p>
+          </div>
+          <div class="fullmap">
+            <svg id="mapFull" role="group" aria-label="The whole system map"></svg>
+            <p class="fullmap-def" id="fullDef">Tap any box to see what it is.</p>
+          </div>
+          <div class="closing-grid">
+            <ol class="questions" id="questions"></ol>
+            <div class="sofar whole">
+              <span class="label">THE WHOLE STORY, IN ONE PLACE</span>
+              <ol id="wholeStory"></ol>
+            </div>
+          </div>
+          <div class="actions">
+            <a class="btn btn-primary" href="#glossary">Browse the words to know →</a>
+            <a class="btn" href="#pass-1">Read it again from pass 1</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view glossary" id="view-glossary" hidden>
       <div class="wrap glossary-inner">
+        <a class="btn btn-small btn-ghost" href="#back" id="glossaryBack">← Back</a>
         <div class="glossary-head">
           <div>
             <p class="eyebrow">WORDS TO KNOW</p>
             <h2>Every term, in plain words.</h2>
           </div>
           <label class="search-label">Find a word
-            <input class="search" id="gsearch" type="search" placeholder="e.g. API, deploy, token" autocomplete="off">
+            <input class="search" id="gsearch" type="search" placeholder="e.g. API, deploy" autocomplete="off">
           </label>
         </div>
         <dl class="glist" id="glist"></dl>
       </div>
     </section>
-
   </main>
 
   <footer class="footer">
@@ -124,9 +134,8 @@
   </footer>
 
   <script src="js/vendor/gsap.min.js"></script>
-  <script src="js/vendor/ScrollTrigger.min.js"></script>
-  <script src="js/content.js?v=9"></script>
-  <script src="js/map.js?v=9"></script>
-  <script src="js/app.js?v=9"></script>
+  <script src="js/content.js?v=10"></script>
+  <script src="js/map.js?v=10"></script>
+  <script src="js/app.js?v=10"></script>
 </body>
 </html>

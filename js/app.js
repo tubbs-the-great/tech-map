@@ -1,11 +1,13 @@
-/* The story. Wide screens: chapters on the right drive one pinned map on the left.
-   Narrow screens: each chapter carries its own inline map. */
+/* The lesson: one pass per screen. Watch the request, read the cards, then move on.
+   Passes unlock in order; progress is remembered on this device. */
 (function () {
   const D = window.TECH_MAP;
   const passes = D.passes;
+  const TOTAL = passes.length;
   const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const narrowQuery = window.matchMedia('(max-width: 960px)');
+  const $ = id => document.getElementById(id);
 
   const defs = {
     client: '<b>Your device.</b> The one doing the asking: your phone or laptop. Also called the client.',
@@ -21,8 +23,14 @@
     github: '<b>GitHub.</b> A website that stores the code so a team can share it.'
   };
 
-  // the boxes each pass is about: what the camera frames at rest
-  const involved = {}, firstIds = {};
+  /* ---------- saved progress (this device only) ---------- */
+  const KEY = 'tm-progress-v1';
+  let progress = { unlocked: 1, current: 0, done: [] };
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.unlocked) progress = { unlocked: s.unlocked, current: s.current || 0, done: s.done || [] }; } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(progress)); } catch (e) {} }
+
+  /* ---------- camera framing per pass ---------- */
+  const involved = {}, firstIds = {}, restIds = {};
   passes.forEach(P => {
     const ids = new Set();
     P.steps.forEach(s => { if (s.node) ids.add(s.node); if (s.link) (D.map.links[s.link].ends || []).forEach(e => ids.add(e)); });
@@ -30,208 +38,215 @@
     involved[P.n] = [...ids];
     const f = P.steps[0];
     firstIds[P.n] = f.node ? [f.node] : (D.map.links[f.link].ends || null);
-  });
-
-  // where the camera settles after a pass: its new boxes (plus the server they connect to), else the boxes involved
-  const restIds = {};
-  passes.forEach(P => {
     const fresh = Object.keys(D.map.nodes).filter(id => D.map.nodes[id].from === P.n && involved[P.n].includes(id));
     if (P.rest) restIds[P.n] = P.rest;
     else if (P.n > 1 && fresh.length) { if (involved[P.n].includes('server') && !fresh.includes('server')) fresh.push('server'); restIds[P.n] = fresh; }
     else restIds[P.n] = involved[P.n];
   });
-
   const checks = {};
   passes.forEach(P => { if (P.check) checks[P.n] = { ...P.check, done: false }; });
 
-  /* ---------- a stage: map + caption + steps + buttons ---------- */
-  const STAGE_HTML = `
-    <div class="stage-head"><span class="stage-caption js-caption"></span></div>
-    <div class="stage-map"><svg class="js-map" role="group" aria-label="The system map for this pass"></svg></div>
-    <div class="stage-foot">
-      <button class="btn btn-primary btn-small btn-play js-play" type="button"><span class="js-playText">▶ Play the request</span></button>
-      <button class="btn btn-small btn-ghost js-whole" type="button">Whole map</button>
-      <ol class="stage-steps js-steps"></ol>
-    </div>
-    <p class="stage-def js-def" aria-live="polite">Tap any box on the map to see what it is.</p>`;
+  /* ---------- the stage ---------- */
+  const stageRoot = $('stage');
+  const map = window.createMap(stageRoot.querySelector('svg.js-map'));
+  const caption = stageRoot.querySelector('.js-caption'), stepsEl = stageRoot.querySelector('.js-steps');
+  const defEl = stageRoot.querySelector('.js-def'), playBtn = stageRoot.querySelector('.js-play'), playText = stageRoot.querySelector('.js-playText');
+  const nodes = map.nodes();
+  const st = { n: 0, playing: false, played: false, run: 0 };
 
-  function makeStage(root) {
-    const map = window.createMap(root.querySelector('svg.js-map'));
-    const caption = root.querySelector('.js-caption'), stepsEl = root.querySelector('.js-steps');
-    const defEl = root.querySelector('.js-def'), playBtn = root.querySelector('.js-play'), playText = root.querySelector('.js-playText');
-    const nodes = map.nodes();
-    const st = { root, map, n: 0, playing: false, played: false };
+  function setPlayState(state) {
+    playBtn.classList.toggle('playing', state === 'playing');
+    playBtn.disabled = state === 'playing';
+    playText.textContent = state === 'playing' ? 'Playing' : state === 'again' ? '↻ Play it again' : '▶ Play the request';
+  }
+  function askHint() {
+    const c = checks[st.n], asking = !!(c && c.node && !c.done && cardIndex === cards.length - 1);
+    for (const id in nodes) nodes[id].g.classList.toggle('askable', asking && map.isVisible(id));
+    if (asking && !st.playing) { caption.textContent = 'QUICK CHECK · TAP A BOX TO ANSWER'; caption.classList.add('ask'); }
+  }
+  function clearAsk() {
+    caption.classList.remove('ask');
+    for (const id in nodes) nodes[id].g.classList.remove('askable');
+    caption.textContent = `PASS ${st.n} · ${passes[st.n - 1].title}`;
+  }
+  function stageShow(n) {
+    const P = passes[n - 1];
+    map.stop(); st.run++; st.playing = false; st.played = progress.done.includes(n);
+    st.n = n;
+    map.render(n);
+    map.frameSmart(restIds[n], firstIds[n], true);
+    map.setDim(involved[n]);
+    map.setSelected(null);
+    stepsEl.innerHTML = P.steps.map(s => `<li>${esc(s.label)}</li>`).join('');
+    stepsEl.scrollLeft = 0;
+    defEl.innerHTML = 'Tap any box on the map to see what it is.';
+    caption.textContent = `PASS ${n} · ${P.title}`; caption.classList.remove('ask');
+    setPlayState(st.played ? 'again' : 'ready');
+  }
+  async function stagePlay() {
+    if (st.playing || !st.n) return;
+    const P = passes[st.n - 1];
+    const run = ++st.run;
+    st.playing = true; setPlayState('playing'); caption.classList.remove('ask');
+    const items = [...stepsEl.children];
+    items.forEach(li => li.classList.remove('active', 'done'));
+    map.setDim(involved[st.n]);
+    const ok = await map.play(P.steps, (i, s) => {
+      items.forEach((li, j) => { li.classList.toggle('active', j === i); li.classList.toggle('done', j < i); });
+      caption.textContent = `STEP ${i + 1} OF ${P.steps.length} · ${s.caption}`;
+      const a = items[i]; if (a) { const r = a.offsetLeft + a.offsetWidth - stepsEl.clientWidth + 8; stepsEl.scrollLeft = Math.max(0, Math.min(a.offsetLeft - 8, r > 0 ? Math.max(r, stepsEl.scrollLeft) : 0)); }
+    }, { rest: restIds[st.n] });
+    if (run !== st.run) return;
+    st.playing = false;
+    if (ok) {
+      items.forEach(li => { li.classList.remove('active'); li.classList.add('done'); });
+      caption.textContent = `PASS ${st.n} · ${P.title} · done`;
+      markPlayed();
+    }
+    stepsEl.scrollLeft = 0;
+    setPlayState('again');
+    askHint();
+  }
+  function markPlayed() {
+    st.played = true;
+    if (!progress.done.includes(st.n)) progress.done.push(st.n);
+    if (st.n >= progress.unlocked) progress.unlocked = Math.min(st.n + 1, TOTAL + 1);
+    save();
+    renderNav(); renderProgress();
+  }
+  playBtn.addEventListener('click', stagePlay);
+  stageRoot.querySelector('.js-whole').addEventListener('click', () => { map.stop(); st.run++; if (st.playing) { st.playing = false; setPlayState(st.played ? 'again' : 'ready'); } map.setDim(null); map.frame(null, true); });
 
-    function setPlayState(state) {
-      playBtn.classList.toggle('playing', state === 'playing');
-      playBtn.disabled = state === 'playing';
-      playText.textContent = state === 'playing' ? 'Playing' : state === 'again' ? '↻ Play it again' : '▶ Play the request';
-    }
-    function askHint() {
-      const c = checks[st.n], asking = !!(c && c.node && !c.done);
-      for (const id in nodes) nodes[id].g.classList.toggle('askable', asking && map.isVisible(id));
-      if (asking && !st.playing) { caption.textContent = 'QUICK CHECK · TAP A BOX TO ANSWER'; caption.classList.add('ask'); }
-    }
-    function clearAsk() {
-      caption.classList.remove('ask');
-      for (const id in nodes) nodes[id].g.classList.remove('askable');
-      caption.textContent = `PASS ${st.n} · ${passes[st.n - 1].title}`;
-    }
-    st.show = function (n) {
-      if (n === st.n) return;
-      st.n = n; st.played = false;
-      const P = passes[n - 1];
-      map.stop(); st.run++; st.playing = false;
-      map.render(n);
-      map.frameSmart(restIds[n], firstIds[n], true);
-      map.setDim(involved[n]);
-      map.setSelected(null);
-      stepsEl.innerHTML = P.steps.map(s => `<li>${esc(s.label)}</li>`).join('');
-      defEl.innerHTML = 'Tap any box on the map to see what it is.';
-      caption.textContent = `PASS ${n} · ${P.title}`; caption.classList.remove('ask');
-      setPlayState('ready');
-      askHint();
+  for (const id in nodes) {
+    const pick = () => {
+      if (!map.isVisible(id)) return;
+      map.setSelected(id);
+      defEl.innerHTML = defs[id] || '';
+      const c = checks[st.n];
+      if (!(c && c.node && !c.done)) return;
+      const box = document.querySelector('#card .check .feedback');
+      if (!box) return;
+      if (id === c.node) { c.done = true; map.flash(id, 'right'); box.innerHTML = `<b class="good">Right.</b> ${esc(c.why)}`; clearAsk(); }
+      else if (c.near && c.near[id]) { box.innerHTML = `<b class="bad">Not quite.</b> ${esc(c.near[id])}`; }
+      else { map.flash(id, 'wrong'); box.innerHTML = `<b class="bad">Not that one.</b> Try another box on the map.`; }
     };
-    st.run = 0;
-    st.play = async function () {
-      if (st.playing || !st.n) return;
-      const P = passes[st.n - 1];
-      const run = ++st.run;
-      st.playing = true; st.played = true; setPlayState('playing'); caption.classList.remove('ask');
-      const items = [...stepsEl.children];
-      items.forEach(li => li.classList.remove('active', 'done'));
-      map.setDim(involved[st.n]);
-      const ok = await map.play(P.steps, (i, s) => {
-        items.forEach((li, j) => { li.classList.toggle('active', j === i); li.classList.toggle('done', j < i); });
-        caption.textContent = `STEP ${i + 1} OF ${P.steps.length} · ${s.caption}`;
-        const active = items[i]; if (active) { const r = active.offsetLeft + active.offsetWidth - stepsEl.clientWidth + 8; stepsEl.scrollLeft = Math.max(0, Math.min(active.offsetLeft - 8, r > 0 ? Math.max(r, stepsEl.scrollLeft) : 0)); }
-      }, { rest: restIds[st.n] });
-      if (run !== st.run) return;
-      st.playing = false;
-      if (ok) { items.forEach(li => { li.classList.remove('active'); li.classList.add('done'); }); caption.textContent = `PASS ${st.n} · ${P.title} · done`; }
-      stepsEl.scrollLeft = 0;
-      setPlayState('again');
-      askHint();
-    };
-    st.stop = function () { map.stop(); st.run++; if (st.playing) { st.playing = false; setPlayState(st.played ? 'again' : 'ready'); } };
-    playBtn.addEventListener('click', st.play);
-    root.querySelector('.js-whole').addEventListener('click', () => { st.stop(); map.setDim(null); map.frame(null, true); });
-
-    // tapping boxes: definitions, and map-based quick checks
-    for (const id in nodes) {
-      const pick = () => {
-        if (!map.isVisible(id)) return;
-        map.setSelected(id);
-        defEl.innerHTML = defs[id] || '';
-        const c = checks[st.n];
-        if (!(c && c.node && !c.done)) return;
-        const box = document.querySelector(`.check[data-pass="${st.n}"] .feedback`);
-        if (id === c.node) {
-          c.done = true; map.flash(id, 'right');
-          box.innerHTML = `<b class="good">Right.</b> ${esc(c.why)}`;
-          clearAsk();
-        } else if (c.near && c.near[id]) {
-          box.innerHTML = `<b class="bad">Not quite.</b> ${esc(c.near[id])}`;
-        } else {
-          map.flash(id, 'wrong');
-          box.innerHTML = `<b class="bad">Not that one.</b> Try another box on the map.`;
-        }
-      };
-      nodes[id].g.addEventListener('click', pick);
-      nodes[id].g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
-    }
-    return st;
+    nodes[id].g.addEventListener('click', pick);
+    nodes[id].g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
   }
 
-  /* ---------- chapters ---------- */
-  const chaptersEl = document.getElementById('chapters');
-  const inlineStages = {};
-  passes.forEach((P, idx) => {
-    const sec = document.createElement('article');
-    sec.className = 'chapter'; sec.id = 'pass-' + P.n; sec.dataset.n = P.n;
-    let h = `<div class="chapter-head"><span class="eyebrow">PASS ${P.n} OF ${D.totalPasses}</span>`;
-    h += `<span class="chapter-title">${esc(P.title)}</span><h2>${P.headline}</h2></div>`;
-    h += `<div class="stage stage-inline" data-n="${P.n}">${STAGE_HTML}</div>`;
-    h += `<div class="prose">${P.body.map(t => `<p>${t}</p>`).join('')}</div>`;
-    if (P.words && P.words.length) h += `<div class="words"><span class="label">WORDS TO KNOW</span>${P.words.map(([t, d]) => `<p><strong>${esc(t)}</strong> · ${esc(d)}</p>`).join('')}</div>`;
-    if (P.peek) h += `<details class="peek"><summary>${esc(P.peek.label)}</summary><pre>${esc(P.peek.code)}</pre></details>`;
-    h += `<div class="sofar"><span class="label">THE STORY SO FAR</span><ol>${P.story.map(([t, n]) => `<li${n ? ' class="new"' : ''}>${esc(t)}</li>`).join('')}</ol></div>`;
+  /* ---------- cards: a pass's text in short screens ---------- */
+  function buildCards(P) {
+    const words = t => t.replace(/<[^>]+>/g, '').split(/\s+/).length;
+    const intro = [], rest = [];
+    let count = 0;
+    P.body.forEach(t => { if (!rest.length && (intro.length === 0 || count + words(t) <= 100)) { intro.push(t); count += words(t); } else rest.push(t); });
+    const out = [];
+    out.push(`<h2>${P.headline}</h2><div class="prose">${intro.map(t => `<p>${t}</p>`).join('')}</div>`);
+    let second = '';
+    if (rest.length) second += `<div class="prose">${rest.map(t => `<p>${t}</p>`).join('')}</div>`;
+    if (P.words && P.words.length) second += `<div class="words"><span class="label">WORDS TO KNOW</span>${P.words.map(([t, d]) => `<p><strong>${esc(t)}</strong> · ${esc(d)}</p>`).join('')}</div>`;
+    if (P.peek) second += `<details class="peek"><summary>${esc(P.peek.label)}</summary><pre>${esc(P.peek.code)}</pre></details>`;
+    if (second) { if (!rest.length && count <= 60) out[0] += second; else out.push(second); }
+    let last = `<div class="sofar"><span class="label">THE STORY SO FAR</span><ol>${P.story.map(([t, n]) => `<li${n ? ' class="new"' : ''}>${esc(t)}</li>`).join('')}</ol></div>`;
     if (P.check) {
-      h += `<div class="check" data-pass="${P.n}"><span class="label">QUICK CHECK</span><p class="q">${esc(P.check.q)}</p>`;
-      if (P.check.options) h += `<div class="options">${P.check.options.map((o, i) => `<button type="button" class="option" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
-      else h += `<p class="hint">Answer by tapping a box on the map.</p>`;
-      h += `<p class="feedback" aria-live="polite"></p></div>`;
+      last += `<div class="check" data-pass="${P.n}"><span class="label">QUICK CHECK · OPTIONAL</span><p class="q">${esc(P.check.q)}</p>`;
+      if (P.check.options) last += `<div class="options">${P.check.options.map((o, i) => `<button type="button" class="option" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
+      else last += `<p class="hint">Answer by tapping a box on the map.</p>`;
+      last += `<p class="feedback" aria-live="polite"></p></div>`;
     }
-    const next = passes[idx + 1];
-    h += `<div class="chapter-nav">`;
-    h += idx > 0 ? `<a class="btn btn-small btn-ghost" href="#pass-${P.n - 1}">← Back</a>` : `<span></span>`;
-    h += next ? `<a class="btn btn-primary" href="#pass-${next.n}">Continue to pass ${next.n} →</a>` : `<a class="btn btn-primary" href="#closing">See the whole map →</a>`;
-    h += `</div>`;
-    sec.innerHTML = h;
-    chaptersEl.appendChild(sec);
-  });
-  document.querySelectorAll('.stage-inline').forEach(root => {
-    const st = makeStage(root);
-    st.show(+root.dataset.n);
-    inlineStages[+root.dataset.n] = st;
-  });
-  const pinned = makeStage(document.getElementById('stage'));
+    out.push(last);
+    return out;
+  }
 
-  /* ---------- progress bar ---------- */
-  const progressBar = document.getElementById('progressBar'), progressLabel = document.getElementById('progressLabel');
-  for (let i = 1; i <= D.totalPasses; i++) {
+  /* ---------- views ---------- */
+  const views = { home: $('view-home'), lesson: $('view-lesson'), end: $('view-end'), glossary: $('view-glossary') };
+  let view = 'home', cur = 0, cards = [], cardIndex = 0, beforeGlossary = '#home';
+  function showView(name) {
+    for (const k in views) views[k].hidden = k !== name;
+    view = name;
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  /* home */
+  function renderHome() {
+    const a = $('homeActions');
+    const resumeAt = progress.current && progress.current <= TOTAL ? progress.current : 0;
+    if (resumeAt > 1 || progress.done.length) {
+      const n = Math.min(Math.max(resumeAt, 1), progress.unlocked);
+      a.innerHTML = `<a class="btn btn-primary" href="#pass-${n}">Continue from pass ${n} →</a><button class="btn" type="button" id="startOver">Start over</button>`;
+      $('startOver').addEventListener('click', () => { progress = { unlocked: 1, current: 0, done: [] }; passes.forEach(P => { if (checks[P.n]) checks[P.n].done = false; }); save(); renderProgress(); location.hash = '#pass-1'; });
+    } else {
+      a.innerHTML = `<a class="btn btn-primary" href="#pass-1">Start the story →</a>`;
+    }
+  }
+
+  /* progress bar */
+  const progressBar = $('progressBar'), progressLabel = $('progressLabel');
+  for (let i = 1; i <= TOTAL; i++) {
     const li = document.createElement('li');
     const b = document.createElement('button'); b.type = 'button';
-    b.setAttribute('aria-label', `Go to pass ${i}: ${passes[i - 1].title}`); b.title = `Pass ${i}: ${passes[i - 1].title}`;
-    b.addEventListener('click', () => document.getElementById('pass-' + i).scrollIntoView({ behavior: reduce() ? 'auto' : 'smooth', block: 'start' }));
+    b.addEventListener('click', () => { if (i <= progress.unlocked) location.hash = '#pass-' + i; });
     li.appendChild(b); progressBar.appendChild(li);
   }
-  function setProgress(n) {
-    [...progressBar.children].forEach((li, i) => { li.classList.toggle('done', i + 1 < n); li.classList.toggle('current', i + 1 === n); });
-    progressLabel.textContent = `PASS ${n} / ${D.totalPasses}`;
+  function renderProgress() {
+    [...progressBar.children].forEach((li, i) => {
+      const n = i + 1, locked = n > progress.unlocked, b = li.firstChild;
+      li.classList.toggle('done', progress.done.includes(n) && n !== cur);
+      li.classList.toggle('current', n === cur && view === 'lesson');
+      li.classList.toggle('locked', locked);
+      b.setAttribute('aria-label', locked ? `Pass ${n}: ${passes[n - 1].title} (locked until you finish pass ${n - 1})` : `Go to pass ${n}: ${passes[n - 1].title}`);
+      b.title = locked ? `Pass ${n} · unlocks after pass ${n - 1}` : `Pass ${n}: ${passes[n - 1].title}`;
+      b.setAttribute('aria-disabled', locked ? 'true' : 'false');
+    });
+    progressLabel.textContent = view === 'lesson' ? `PASS ${cur} / ${TOTAL}` : `${progress.done.length} / ${TOTAL} DONE`;
   }
 
-  /* ---------- the whole map, full size ---------- */
-  const FULL = window.createMap(document.getElementById('mapFull'));
-  FULL.render(D.totalPasses); FULL.frame(null, false);
-  const fullDef = document.getElementById('fullDef'), fullNodes = FULL.nodes();
-  for (const id in fullNodes) {
-    const pick = () => { FULL.setSelected(id); fullDef.innerHTML = defs[id] || ''; };
-    fullNodes[id].g.addEventListener('click', pick);
-    fullNodes[id].g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+  /* lesson */
+  const cardEl = $('card'), dotsEl = $('cardDots'), navEl = $('panelNav');
+  function openPass(n, cardAt) {
+    cur = n;
+    progress.current = n; save();
+    const P = passes[n - 1];
+    showView('lesson');
+    $('passEyebrow').textContent = `PASS ${n} OF ${TOTAL}`;
+    $('passTitle').textContent = P.title;
+    cards = buildCards(P);
+    stageShow(n);
+    renderProgress();
+    showCard(cardAt || 0);
+    setTimeout(() => { if (cur === n && view === 'lesson' && !st.played) stagePlay(); }, 700);
   }
-
-  /* ---------- closing section and glossary ---------- */
-  document.getElementById('closingHeadline').textContent = D.closing.headline;
-  document.getElementById('closingIntro').textContent = D.closing.intro;
-  document.getElementById('questions').innerHTML = D.closing.questions.map(([q, t]) => `<li><b>${esc(q)}</b>${esc(t)}</li>`).join('');
-  document.getElementById('wholeStory').innerHTML = D.closing.wholeStory.map(t => `<li>${esc(t)}</li>`).join('');
-  const glist = document.getElementById('glist'), gsearch = document.getElementById('gsearch');
-  function renderGlossary(q) {
-    q = (q || '').trim().toLowerCase();
-    const items = D.glossary.filter(([t, d]) => !q || t.toLowerCase().includes(q) || d.toLowerCase().includes(q));
-    glist.innerHTML = items.length ? items.map(([t, d]) => `<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('') : `<p class="none">No words match "${esc(q)}".</p>`;
+  function showCard(i) {
+    cardIndex = Math.max(0, Math.min(cards.length - 1, i));
+    cardEl.innerHTML = cards[cardIndex];
+    cardEl.scrollTop = 0;
+    cardEl.classList.remove('enter'); void cardEl.offsetWidth; cardEl.classList.add('enter');
+    dotsEl.innerHTML = cards.map((_, k) => `<li class="${k === cardIndex ? 'on' : k < cardIndex ? 'past' : ''}"><button type="button" data-k="${k}" aria-label="Step ${k + 1} of ${cards.length}"></button></li>`).join('');
+    renderNav();
+    askHint();
+    cardEl.focus({ preventScroll: true });
   }
-  gsearch.addEventListener('input', () => renderGlossary(gsearch.value));
-  renderGlossary('');
-
-  /* ---------- in-page links scroll smoothly; wheel scrolling stays native ---------- */
-  document.addEventListener('click', e => {
-    const link = e.target.closest('a[href^="#"]');
-    if (!link) return;
-    const target = document.querySelector(link.getAttribute('href'));
-    if (!target) return;
-    e.preventDefault();
-    target.scrollIntoView({ behavior: reduce() ? 'auto' : 'smooth', block: 'start' });
-    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
-    target.focus({ preventScroll: true });
-    history.replaceState(null, '', link.getAttribute('href'));
+  function renderNav() {
+    const lastCard = cardIndex === cards.length - 1;
+    const isLast = cur === TOTAL;
+    let h = cardIndex > 0 ? `<button class="btn btn-small btn-ghost" type="button" data-nav="prev">← Back</button>` : (cur > 1 ? `<a class="btn btn-small btn-ghost" href="#pass-${cur - 1}">← Pass ${cur - 1}</a>` : `<span></span>`);
+    if (!lastCard) h += `<button class="btn btn-primary" type="button" data-nav="next">Continue →</button>`;
+    else if (st.played) h += isLast ? `<a class="btn btn-primary" href="#end">See the whole map →</a>` : `<a class="btn btn-primary" href="#pass-${cur + 1}">Next: pass ${cur + 1} →</a>`;
+    else h += `<span class="locked-note"><button class="btn btn-primary" type="button" disabled>${isLast ? 'See the whole map →' : `Next: pass ${cur + 1} →`}</button><span class="note">Unlocks once the request has played</span></span>`;
+    navEl.innerHTML = h;
+  }
+  navEl.addEventListener('click', e => {
+    const b = e.target.closest('[data-nav]'); if (!b) return;
+    showCard(cardIndex + (b.dataset.nav === 'next' ? 1 : -1));
   });
-
-  /* ---------- option checks ---------- */
-  chaptersEl.addEventListener('click', e => {
-    const btn = e.target.closest('.option');
-    if (!btn) return;
+  dotsEl.addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (b) showCard(+b.dataset.k); });
+  document.addEventListener('keydown', e => {
+    if (view !== 'lesson' || e.target.matches('input, textarea')) return;
+    if (e.key === 'ArrowRight' && cardIndex < cards.length - 1) showCard(cardIndex + 1);
+    if (e.key === 'ArrowLeft' && cardIndex > 0) showCard(cardIndex - 1);
+  });
+  cardEl.addEventListener('click', e => {
+    const btn = e.target.closest('.option'); if (!btn) return;
     const box = btn.closest('.check'), c = checks[+box.dataset.pass];
     if (!c || c.done) return;
     c.done = true;
@@ -240,50 +255,64 @@
     box.querySelector('.feedback').innerHTML = (i === c.answer ? '<b class="good">Right.</b> ' : '<b class="bad">Not quite.</b> ') + esc(c.why);
   });
 
-  /* ---------- scrolling drives the maps ---------- */
-  let cur = 0, pendingPlay = false, settleTimer = null;
-  function enterPass(n) {
-    if (n === cur) return;
-    cur = n; setProgress(n);
-    if (!narrowQuery.matches) { pinned.show(n); pendingPlay = true; }
+  /* end + glossary */
+  const FULL = window.createMap($('mapFull'));
+  let fullReady = false;
+  function openEnd() {
+    showView('end');
+    if (!fullReady) { FULL.render(TOTAL); FULL.frame(null, false); fullReady = true; }
+    else FULL.frame(null, false);
+    renderProgress();
   }
-  window.addEventListener('scroll', () => {
-    clearTimeout(settleTimer);
-    settleTimer = setTimeout(() => { if (pendingPlay && !narrowQuery.matches) { pendingPlay = false; pinned.play(); } }, 220);
-  }, { passive: true });
-  gsap.registerPlugin(ScrollTrigger);
-  document.querySelectorAll('.chapter').forEach(sec => {
-    ScrollTrigger.create({ trigger: sec, start: 'top 55%', end: 'bottom 55%', onEnter: () => enterPass(+sec.dataset.n), onEnterBack: () => enterPass(+sec.dataset.n) });
-  });
-  // narrow screens: an inline map plays once when it comes into view
-  const io = new IntersectionObserver(entries => {
-    entries.forEach(en => {
-      const st = inlineStages[+en.target.dataset.n];
-      if (!st) return;
-      if (en.isIntersecting && narrowQuery.matches) { if (!st.played) setTimeout(() => { if (narrowQuery.matches) st.play(); }, 500); }
-      else st.stop();
-    });
-  }, { threshold: 0.35 });
-  Object.values(inlineStages).forEach(st => io.observe(st.root));
-  // switching between layouts: hand the current pass to the pinned stage
-  narrowQuery.addEventListener('change', () => {
-    if (!narrowQuery.matches && cur) { pinned.show(cur); setTimeout(() => { if (!narrowQuery.matches) pinned.play(); }, 600); }
-    else { pinned.stop(); const st = inlineStages[cur]; if (st && !st.played) setTimeout(() => { if (narrowQuery.matches) st.play(); }, 600); }
-  });
+  const fullDef = $('fullDef'), fullNodes = FULL.nodes();
+  for (const id in fullNodes) {
+    const pick = () => { FULL.setSelected(id); fullDef.innerHTML = defs[id] || ''; };
+    fullNodes[id].g.addEventListener('click', pick);
+    fullNodes[id].g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+  }
+  $('closingHeadline').textContent = D.closing.headline;
+  $('closingIntro').textContent = D.closing.intro;
+  $('questions').innerHTML = D.closing.questions.map(([q, t]) => `<li><b>${esc(q)}</b>${esc(t)}</li>`).join('');
+  $('wholeStory').innerHTML = D.closing.wholeStory.map(t => `<li>${esc(t)}</li>`).join('');
+  const glist = $('glist'), gsearch = $('gsearch');
+  function renderGlossary(q) {
+    q = (q || '').trim().toLowerCase();
+    const items = D.glossary.filter(([t, d]) => !q || t.toLowerCase().includes(q) || d.toLowerCase().includes(q));
+    glist.innerHTML = items.length ? items.map(([t, d]) => `<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('') : `<p class="none">No words match "${esc(q)}".</p>`;
+  }
+  gsearch.addEventListener('input', () => renderGlossary(gsearch.value));
+  renderGlossary('');
+  $('glossaryBack').addEventListener('click', e => { e.preventDefault(); location.hash = beforeGlossary; });
+
+  /* ---------- routing ---------- */
+  function route() {
+    const h = location.hash || '#home';
+    if (h === '#glossary') { if (view !== 'glossary') beforeGlossary = view === 'lesson' ? `#pass-${cur}` : view === 'end' ? '#end' : '#home'; map.stop(); showView('glossary'); renderProgress(); return; }
+    if (h === '#end') {
+      if (progress.done.includes(TOTAL) || progress.unlocked > TOTAL) { map.stop(); openEnd(); return; }
+      location.replace('#pass-' + Math.min(progress.unlocked, TOTAL)); return;
+    }
+    const m = /^#pass-(\d+)$/.exec(h);
+    if (m) {
+      const n = +m[1];
+      if (n >= 1 && n <= TOTAL) {
+        if (n > progress.unlocked) { location.replace('#pass-' + progress.unlocked); return; }
+        if (view === 'lesson' && n === cur) return;
+        openPass(n); return;
+      }
+    }
+    map.stop(); showView('home'); renderHome(); renderProgress();
+  }
+  window.addEventListener('hashchange', route);
 
   /* ---------- hero: the packet drifts along the active path ---------- */
   (function hero() {
-    const path = document.getElementById('heroPath'), dot = document.getElementById('heroDot'), halo = document.getElementById('heroHalo');
+    const path = $('heroPath'), dot = $('heroDot'), halo = $('heroHalo');
     if (!path || reduce()) return;
     const len = path.getTotalLength(), o = { t: 0 };
     gsap.to(o, { t: len, duration: 2.4, ease: 'power1.inOut', repeat: -1, repeatDelay: 1.6, yoyo: true,
       onUpdate: () => { const p = path.getPointAtLength(o.t); dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y); halo.setAttribute('cx', p.x); halo.setAttribute('cy', p.y); } });
   })();
 
-  /* ---------- start ---------- */
-  const m = /^#pass-(\d+)$/.exec(location.hash);
-  const start = m && passes[+m[1] - 1] ? +m[1] : 1;
-  cur = start; setProgress(start);
-  pinned.show(start);
-  if (!narrowQuery.matches) setTimeout(() => { if (cur === start) pinned.play(); }, 700);
+  route();
 })();
