@@ -140,7 +140,7 @@
     blocks.push({ html: `<h2>${P.headline}</h2>`, keep: true });
     P.body.forEach(t => blocks.push({ html: `<p class="prose-p">${t}</p>` }));
     if (P.words && P.words.length) blocks.push({ html: `<div class="words"><span class="label">WORDS TO KNOW</span>${P.words.map(([t, d]) => `<p><strong>${esc(t)}</strong> · ${esc(d)}</p>`).join('')}</div>` });
-    if (P.peek) blocks.push({ html: `<details class="peek"><summary>${esc(P.peek.label)}</summary><pre>${esc(P.peek.code)}</pre></details>` });
+    if (P.peek) blocks.push({ html: `<button type="button" class="peek-btn" data-peek="${P.n}"><span class="chev"></span>${esc(P.peek.label)}</button>` });
     blocks.push({ html: `<div class="sofar"><span class="label">THE STORY SO FAR</span><ol>${P.story.map(([t, n]) => `<li${n ? ' class="new"' : ''}>${esc(t)}</li>`).join('')}</ol></div>` });
     if (P.check) {
       let h = `<div class="check" data-pass="${P.n}"><span class="label">QUICK CHECK · OPTIONAL</span><p class="q">${esc(P.check.q)}</p>`;
@@ -181,6 +181,7 @@
   function showView(name) {
     for (const k in views) views[k].hidden = k !== name;
     view = name;
+    document.documentElement.classList.toggle('lesson-mode', name === 'lesson');
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
@@ -263,7 +264,15 @@
     if (e.key === 'ArrowRight' && cardIndex < cards.length - 1) showCard(cardIndex + 1);
     if (e.key === 'ArrowLeft' && cardIndex > 0) showCard(cardIndex - 1);
   });
+  const peekDlg = $('peek'), peekTitle = $('peekTitle'), peekCode = $('peekCode');
   cardEl.addEventListener('click', e => {
+    const pb = e.target.closest('.peek-btn');
+    if (pb) {
+      const P = passes[+pb.dataset.peek - 1];
+      peekTitle.textContent = P.peek.label; peekCode.textContent = P.peek.code;
+      if (typeof peekDlg.showModal === 'function') peekDlg.showModal(); else peekDlg.setAttribute('open', '');
+      return;
+    }
     const btn = e.target.closest('.option'); if (!btn) return;
     const box = btn.closest('.check'), c = checks[+box.dataset.pass];
     if (!c || c.done) return;
@@ -284,6 +293,9 @@
       showCard(k);
     }, 200);
   });
+
+  $('peekClose').addEventListener('click', () => peekDlg.close());
+  peekDlg.addEventListener('click', e => { if (e.target === peekDlg) peekDlg.close(); });
 
   /* end + glossary */
   const FULL = window.createMap($('mapFull'));
