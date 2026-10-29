@@ -283,6 +283,7 @@ window.TECH_MAP = {
     {
       n: 9,
       title: 'Git and GitHub',
+      rest: ['laptop', 'github', 'db'],
       headline: 'Before anyone uses an app, someone builds it.',
       body: [
         'Everything so far is how software <em>runs</em>. This pass is about how it gets <em>built</em>.',

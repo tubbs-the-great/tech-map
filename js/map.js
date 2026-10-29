@@ -90,7 +90,7 @@ window.createMap = function (svg) {
   }
   function frameSmart(ids, fallback, animate, duration) {
     const s = ids ? spanOf(ids) : { w: Infinity, h: Infinity };
-    const tooWide = s.w > 520 || s.h > 380;
+    const tooWide = s.w > 560 || s.h > 400;
     const pick = tooWide && fallback && fallback.length ? fallback : ids;
     lastFrame = pick; frame(pick, animate, duration);
   }
@@ -114,7 +114,7 @@ window.createMap = function (svg) {
       const on = p >= n.from;
       const wasHidden = e.g.classList.contains('m-hidden');
       show(e.g, on);
-      if (on && wasHidden && animate && !reduce()) gsap.fromTo(e.g, { opacity: 0 }, { opacity: 1, duration: 0.6, delay: 0.5 });
+      if (on && wasHidden && animate && !reduce()) gsap.fromTo(e.g, { opacity: 0 }, { opacity: 1, duration: 0.6, delay: 0.5, onComplete: () => gsap.set(e.g, { clearProps: 'opacity' }) });
       e.g.setAttribute('tabindex', on ? '0' : '-1');
       e.g.classList.toggle('hub', n.kind === 'hub');
       e.g.classList.toggle('dashed', !!n.dashed);

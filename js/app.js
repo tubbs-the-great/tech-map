@@ -32,6 +32,15 @@
     firstIds[P.n] = f.node ? [f.node] : (D.map.links[f.link].ends || null);
   });
 
+  // where the camera settles after a pass: its new boxes (plus the server they connect to), else the boxes involved
+  const restIds = {};
+  passes.forEach(P => {
+    const fresh = Object.keys(D.map.nodes).filter(id => D.map.nodes[id].from === P.n && involved[P.n].includes(id));
+    if (P.rest) restIds[P.n] = P.rest;
+    else if (P.n > 1 && fresh.length) { if (involved[P.n].includes('server') && !fresh.includes('server')) fresh.push('server'); restIds[P.n] = fresh; }
+    else restIds[P.n] = involved[P.n];
+  });
+
   const checks = {};
   passes.forEach(P => { if (P.check) checks[P.n] = { ...P.check, done: false }; });
 
@@ -61,7 +70,7 @@
     function askHint() {
       const c = checks[st.n], asking = !!(c && c.node && !c.done);
       for (const id in nodes) nodes[id].g.classList.toggle('askable', asking && map.isVisible(id));
-      if (asking && !st.playing) { caption.textContent = 'QUICK CHECK · TAP A BOX ON THE MAP TO ANSWER'; caption.classList.add('ask'); }
+      if (asking && !st.playing) { caption.textContent = 'QUICK CHECK · TAP A BOX TO ANSWER'; caption.classList.add('ask'); }
     }
     function clearAsk() {
       caption.classList.remove('ask');
@@ -74,7 +83,7 @@
       const P = passes[n - 1];
       map.stop(); st.playing = false;
       map.render(n);
-      map.frameSmart(involved[n], firstIds[n], true);
+      map.frameSmart(restIds[n], firstIds[n], true);
       map.setDim(involved[n]);
       map.setSelected(null);
       stepsEl.innerHTML = P.steps.map(s => `<li>${esc(s.label)}</li>`).join('');
@@ -93,10 +102,11 @@
       const ok = await map.play(P.steps, (i, s) => {
         items.forEach((li, j) => { li.classList.toggle('active', j === i); li.classList.toggle('done', j < i); });
         caption.textContent = `STEP ${i + 1} OF ${P.steps.length} · ${s.caption}`;
-        const active = items[i]; if (active && active.scrollIntoView) active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-      }, { rest: involved[st.n] });
+        const active = items[i]; if (active) { const r = active.offsetLeft + active.offsetWidth - stepsEl.clientWidth + 8; stepsEl.scrollLeft = Math.max(0, Math.min(active.offsetLeft - 8, r > 0 ? Math.max(r, stepsEl.scrollLeft) : 0)); }
+      }, { rest: restIds[st.n] });
       st.playing = false;
       if (ok) { items.forEach(li => { li.classList.remove('active'); li.classList.add('done'); }); caption.textContent = `PASS ${st.n} · ${P.title} · done`; }
+      stepsEl.scrollLeft = 0;
       setPlayState('again');
       askHint();
     };
