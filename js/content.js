@@ -17,7 +17,7 @@ window.TECH_MAP = {
         title: p => p < 2 ? 'You' : 'Your device',
         sub: p => p < 2 ? 'your browser' : 'the client',
         chips: p => p >= 3 ? ['HTML · CSS · JS'] : [] },
-      server: { from: 1, x: 300, y: p => 295 - (p >= 5 ? 64 : p >= 3 ? 52 : 43), w: 180, h: p => p >= 5 ? 128 : p >= 3 ? 104 : 86, kind: 'hub',
+      server: { from: 1, x: 300, y: p => 295 - (p >= 5 ? 64 : p >= 3 ? 52 : 45), w: 180, h: p => p >= 5 ? 128 : p >= 3 ? 104 : 90, kind: 'hub',
         title: p => p < 2 ? 'The internet' : 'A server',
         sub: p => p < 2 ? 'where things come from' : 'another computer',
         chips: p => [].concat(p >= 3 ? ['Back-end code'] : [], p >= 5 ? ['Framework'] : []) },
@@ -28,7 +28,7 @@ window.TECH_MAP = {
       ai:     { from: 11, x: 650, y: 180, w: 180, h: 72, title: () => 'AI model', sub: () => 'writes the reply' },
       tools:  { from: 11, x: 650, y: 420, w: 180, h: 64, title: () => 'Tools', sub: () => 'search · calendar', dashed: true },
       agent:  { from: 12, x: 40,  y: 562, w: 130, h: 52, title: () => 'AI agent', sub: () => 'writes code', compact: true },
-      laptop: { from: 9,  x: 200, y: 562, w: 140, h: 52, title: () => 'Your laptop', sub: () => 'saves with Git', compact: true },
+      laptop: { from: 9,  x: 200, y: 562, w: 140, h: 52, title: () => 'A laptop', sub: () => 'saves with Git', compact: true },
       github: { from: 9,  x: 370, y: 562, w: 130, h: 52, title: () => 'GitHub', sub: () => 'stores the code', compact: true }
     },
     links: {
@@ -104,7 +104,7 @@ window.TECH_MAP = {
         { link: 'c_s', dir: -1, label: '3 · answer comes back', caption: 'The finished page comes back to you.' }
       ],
       check: {
-        q: 'On the map, tap the computer that does the work before answering.',
+        q: 'On the map, tap the computer that does the work.',
         node: 'server',
         why: 'The server does the work. Your device only asks and shows the result.'
       }
@@ -141,13 +141,12 @@ window.TECH_MAP = {
       title: 'Databases',
       headline: 'The server keeps a giant spreadsheet.',
       body: [
-        'Most of the server\'s work involves a <strong>database</strong>. Think of it as a huge collection of spreadsheets. It holds users, posts, messages, orders, anything the app needs to remember.',
+        'Most of the server\'s work involves a <strong>database</strong>. Think of it as a giant spreadsheet, or a whole folder of them. It holds users, posts, messages, orders, anything the app needs to remember.',
         'When you open someone\'s profile, the server doesn\'t have that page ready. It reads the web address, finds the right row in the database, and builds the page from it.',
         '<strong>One surprise:</strong> every page you see was assembled from rows like these, moments before it arrived.'
       ],
       words: [
-        ['Database', 'where an app stores everything it needs to remember.'],
-        ['JSON', 'a simple text format for passing information between computers. You\'ll see it again.']
+        ['Database', 'where an app stores everything it needs to remember.']
       ],
       peek: { label: 'See one user as a row, then as JSON', code: 'username | first_name | last_name | email\nspike    | William    | Pratt     | wpratt@sunnyd.com\n\n{\n  "username": "spike",\n  "first_name": "William",\n  "last_name": "Pratt",\n  "email": "wpratt@sunnyd.com"\n}' },
       story: [
@@ -218,7 +217,7 @@ window.TECH_MAP = {
         { link: 'c_s', dir: 1, label: '1 · HTTP GET', caption: 'Your device sends a GET request for /users/spike.' },
         { link: 's_db', dir: 1, label: '2 · look it up', caption: 'The server looks up the user.' },
         { link: 's_db', dir: -1, label: '3 · row found', caption: 'The row comes back.' },
-        { link: 'c_s', dir: -1, label: '4 · HTTP response', caption: 'The page comes back over a scrambled HTTPS connection.' }
+        { link: 'c_s', dir: -1, label: '4 · HTTP response', caption: 'The page comes back as an HTTP response.' }
       ],
       check: { q: 'You fill in a sign-up form and press Submit. What kind of request is that?', options: ['GET', 'POST'], answer: 1, why: 'You\'re sending information to be saved, so it\'s a POST.' }
     },
@@ -373,7 +372,7 @@ window.TECH_MAP = {
         { link: 's_ai', dir: -1, label: '9 · reply', caption: 'The AI writes its reply.' },
         { link: 'c_s', dir: -1, label: '10 · you see it', caption: 'The reply appears on your screen.' }
       ],
-      check: { q: 'An AI assistant needs to check your calendar. Tap the box that actually does the checking.', node: 'server', why: 'The AI can only ask. The app\'s server does the real work and passes the result back.' }
+      check: { q: 'An AI assistant needs to check your calendar. Tap the computer that actually runs that tool.', node: 'server', near: { tools: 'Close. The calendar is one of the tools, but something has to run it. Which box does the running?', ai: 'Close. The AI asks for the tool, but it can\'t run anything itself. Which box does the running?' }, why: 'The AI can only ask. The app\'s server runs the tool and passes the result back.' }
     },
     {
       n: 12,
@@ -381,7 +380,7 @@ window.TECH_MAP = {
       headline: 'AI builds the same map you just learned.',
       body: [
         'AI coding tools don\'t make anything magical. They build exactly what\'s on this map: a front end, a back end, a database, some libraries and APIs, and a deployment to the cloud.',
-        'A coding <strong>agent</strong> is the last pass pointed at a project. It reads the files, writes code, runs it, sees errors, and fixes them, in a loop.',
+        'A coding <strong>agent</strong> is the agent from pass 11, pointed at a project. It reads the files, writes code, runs it, sees errors, and fixes them, in a loop. Describing what you want and letting it build is what people call <strong>vibe coding</strong>.',
         'That makes this map your checklist. Ask for what you want using its words. When something breaks, say <em>where</em>: front end, back end, database, API or deployment. Save a checkpoint before big changes, so Git can undo them.',
         '<strong>Where AI most often slips:</strong> secret keys put in the front end where anyone can read them, apps that check who you are but not what you\'re allowed to do, and rules enforced only on your device, where a user can change them.'
       ],

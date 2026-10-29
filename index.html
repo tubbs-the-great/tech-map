@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=8">
+  <link rel="stylesheet" href="css/styles.css?v=9">
 </head>
 <body>
   <a class="skip" href="#story">Skip to the story</a>
@@ -18,7 +18,7 @@
       <a class="brand" href="#top">When the Code Writes Itself</a>
       <div class="progress" aria-label="Your progress">
         <span class="progress-label" id="progressLabel">PASS 1 / 12</span>
-        <ol class="progress-bar" id="progressBar" aria-hidden="true"></ol>
+        <ol class="progress-bar" id="progressBar"></ol>
       </div>
     </div>
   </header>
@@ -67,7 +67,7 @@
           <div class="stage" id="stage">
             <div class="stage-head"><span class="stage-caption js-caption"></span></div>
             <div class="stage-map">
-              <svg class="js-map" role="img" aria-label="The system map, which grows with each pass"></svg>
+              <svg class="js-map" role="group" aria-label="The system map, which grows with each pass"></svg>
             </div>
             <div class="stage-foot">
               <button class="btn btn-primary btn-small btn-play js-play" type="button"><span class="js-playText">▶ Play the request</span></button>
@@ -89,7 +89,7 @@
           <p class="lede" id="closingIntro"></p>
         </div>
         <div class="fullmap">
-          <svg id="mapFull" role="img" aria-label="The whole system map"></svg>
+          <svg id="mapFull" role="group" aria-label="The whole system map"></svg>
           <p class="fullmap-def" id="fullDef">Tap any box to see what it is.</p>
         </div>
         <div class="closing-grid">
@@ -125,8 +125,8 @@
 
   <script src="js/vendor/gsap.min.js"></script>
   <script src="js/vendor/ScrollTrigger.min.js"></script>
-  <script src="js/content.js?v=8"></script>
-  <script src="js/map.js?v=8"></script>
-  <script src="js/app.js?v=8"></script>
+  <script src="js/content.js?v=9"></script>
+  <script src="js/map.js?v=9"></script>
+  <script src="js/app.js?v=9"></script>
 </body>
 </html>

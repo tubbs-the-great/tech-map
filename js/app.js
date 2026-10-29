@@ -17,7 +17,7 @@
     ai: '<b>AI model.</b> The program that writes the replies. It lives on a server far away.',
     tools: '<b>Tools.</b> Things the AI can ask the app to do, like a search.',
     agent: '<b>AI agent.</b> An AI that writes code and keeps going until the job is done.',
-    laptop: '<b>Your laptop.</b> Where the code is written and saved with Git.',
+    laptop: '<b>A laptop.</b> Where a developer writes the code and saves checkpoints with Git.',
     github: '<b>GitHub.</b> A website that stores the code so a team can share it.'
   };
 
@@ -47,7 +47,7 @@
   /* ---------- a stage: map + caption + steps + buttons ---------- */
   const STAGE_HTML = `
     <div class="stage-head"><span class="stage-caption js-caption"></span></div>
-    <div class="stage-map"><svg class="js-map" role="img" aria-label="The system map for this pass"></svg></div>
+    <div class="stage-map"><svg class="js-map" role="group" aria-label="The system map for this pass"></svg></div>
     <div class="stage-foot">
       <button class="btn btn-primary btn-small btn-play js-play" type="button"><span class="js-playText">▶ Play the request</span></button>
       <button class="btn btn-small btn-ghost js-whole" type="button">Whole map</button>
@@ -81,7 +81,7 @@
       if (n === st.n) return;
       st.n = n; st.played = false;
       const P = passes[n - 1];
-      map.stop(); st.playing = false;
+      map.stop(); st.run++; st.playing = false;
       map.render(n);
       map.frameSmart(restIds[n], firstIds[n], true);
       map.setDim(involved[n]);
@@ -92,9 +92,11 @@
       setPlayState('ready');
       askHint();
     };
+    st.run = 0;
     st.play = async function () {
       if (st.playing || !st.n) return;
       const P = passes[st.n - 1];
+      const run = ++st.run;
       st.playing = true; st.played = true; setPlayState('playing'); caption.classList.remove('ask');
       const items = [...stepsEl.children];
       items.forEach(li => li.classList.remove('active', 'done'));
@@ -104,13 +106,14 @@
         caption.textContent = `STEP ${i + 1} OF ${P.steps.length} · ${s.caption}`;
         const active = items[i]; if (active) { const r = active.offsetLeft + active.offsetWidth - stepsEl.clientWidth + 8; stepsEl.scrollLeft = Math.max(0, Math.min(active.offsetLeft - 8, r > 0 ? Math.max(r, stepsEl.scrollLeft) : 0)); }
       }, { rest: restIds[st.n] });
+      if (run !== st.run) return;
       st.playing = false;
       if (ok) { items.forEach(li => { li.classList.remove('active'); li.classList.add('done'); }); caption.textContent = `PASS ${st.n} · ${P.title} · done`; }
       stepsEl.scrollLeft = 0;
       setPlayState('again');
       askHint();
     };
-    st.stop = function () { map.stop(); if (st.playing) { st.playing = false; setPlayState(st.played ? 'again' : 'ready'); } };
+    st.stop = function () { map.stop(); st.run++; if (st.playing) { st.playing = false; setPlayState(st.played ? 'again' : 'ready'); } };
     playBtn.addEventListener('click', st.play);
     root.querySelector('.js-whole').addEventListener('click', () => { st.stop(); map.setDim(null); map.frame(null, true); });
 
@@ -127,6 +130,8 @@
           c.done = true; map.flash(id, 'right');
           box.innerHTML = `<b class="good">Right.</b> ${esc(c.why)}`;
           clearAsk();
+        } else if (c.near && c.near[id]) {
+          box.innerHTML = `<b class="bad">Not quite.</b> ${esc(c.near[id])}`;
         } else {
           map.flash(id, 'wrong');
           box.innerHTML = `<b class="bad">Not that one.</b> Try another box on the map.`;
@@ -218,6 +223,8 @@
     if (!target) return;
     e.preventDefault();
     target.scrollIntoView({ behavior: reduce() ? 'auto' : 'smooth', block: 'start' });
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
     history.replaceState(null, '', link.getAttribute('href'));
   });
 
@@ -256,10 +263,13 @@
       if (en.isIntersecting && narrowQuery.matches) { if (!st.played) setTimeout(() => { if (narrowQuery.matches) st.play(); }, 500); }
       else st.stop();
     });
-  }, { threshold: 0.6 });
+  }, { threshold: 0.35 });
   Object.values(inlineStages).forEach(st => io.observe(st.root));
   // switching between layouts: hand the current pass to the pinned stage
-  narrowQuery.addEventListener('change', () => { if (!narrowQuery.matches && cur) { pinned.show(cur); } else { pinned.stop(); } });
+  narrowQuery.addEventListener('change', () => {
+    if (!narrowQuery.matches && cur) { pinned.show(cur); setTimeout(() => { if (!narrowQuery.matches) pinned.play(); }, 600); }
+    else { pinned.stop(); const st = inlineStages[cur]; if (st && !st.played) setTimeout(() => { if (narrowQuery.matches) st.play(); }, 600); }
+  });
 
   /* ---------- hero: the packet drifts along the active path ---------- */
   (function hero() {

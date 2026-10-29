@@ -33,7 +33,7 @@ window.createMap = function (svg) {
     const g = el('g', { class: 'm-hidden' }, gLinks);
     const path = el('path', { class: 'm-link' + (l.dashed ? ' dashed' : ''), d: l.d }, g);
     const label = l.label ? el('text', { class: 'm-link-label', x: l.lx, y: l.ly }, g) : null;
-    links[id] = { g, path, label, len: path.getTotalLength() };
+    links[id] = { g, path, label, len: 0 };
   }
   // nodes
   const nodes = {};
@@ -71,13 +71,15 @@ window.createMap = function (svg) {
     } else {
       want.forEach(id => { const g = geom(M.nodes[id], p); add(g.x, g.y - 14, g.w, g.h + 14); });
     }
-    const pad = want && want.length ? 44 : 36;
-    let w = Math.max(x2 - x1 + pad * 2, 400), h = Math.max(y2 - y1 + pad * 2, 200);
     const r = svg.getBoundingClientRect();
+    const small = r.width > 0 && r.width < 520;
+    const pad = want && want.length ? (small ? 26 : 44) : 36;
+    let w = Math.max(x2 - x1 + pad * 2, small ? 300 : 400), h = Math.max(y2 - y1 + pad * 2, 200);
     const aspect = r.width > 0 && r.height > 0 ? r.width / r.height : ASPECT;
     if (w / h > aspect) h = w / aspect; else w = h * aspect;
     const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
     const target = { x: cx - w / 2, y: cy - h / 2, w, h };
+    markSliced(target);
     gsap.killTweensOf(view);
     if (animate && !reduce()) gsap.to(view, { ...target, duration: duration || 0.9, ease: 'power2.inOut', onUpdate: applyView });
     else { Object.assign(view, target); applyView(); }
@@ -93,6 +95,17 @@ window.createMap = function (svg) {
     const tooWide = s.w > 560 || s.h > 400;
     const pick = tooWide && fallback && fallback.length ? fallback : ids;
     lastFrame = pick; frame(pick, animate, duration);
+  }
+  // a box the frame would cut through is faded almost out, so nothing reads as broken
+  function markSliced(v) {
+    const p = current;
+    for (const id in nodes) {
+      const n = M.nodes[id]; if (p < n.from) continue;
+      const g = geom(n, p);
+      const inside = g.x >= v.x && g.x + g.w <= v.x + v.w && g.y - 12 >= v.y && g.y + g.h <= v.y + v.h;
+      const outside = g.x + g.w <= v.x || g.x >= v.x + v.w || g.y + g.h <= v.y || g.y >= v.y + v.h;
+      nodes[id].g.classList.toggle('sliced', !inside && !outside);
+    }
   }
   let lastFrame = null;
   function setDim(ids) {
@@ -150,10 +163,10 @@ window.createMap = function (svg) {
   }
 
   // ---- request animation ----
-  let token = 0;
+  let token = 0, tween = null;
   function stop() {
     token++;
-    gsap.killTweensOf(packet);
+    if (tween) { tween.kill(); tween = null; }
     show(packet, false); show(halo, false);
     for (const id in links) links[id].path.classList.remove('active');
     for (const id in nodes) nodes[id].g.classList.remove('pulse');
@@ -176,7 +189,8 @@ window.createMap = function (svg) {
       onStep(i, s);
       if (opts.follow !== false) {
         const ids = s.node ? [s.node].concat(opts.rest || []) : (M.links[s.link].ends || null);
-        frame(s.node ? (opts.rest && opts.rest.includes(s.node) ? opts.rest : ids) : ids, true, 0.9);
+        lastFrame = s.node ? (opts.rest && opts.rest.includes(s.node) ? opts.rest : ids) : ids;
+        frame(lastFrame, true, 0.9);
         await wait(reduce() ? 0 : 350);
       }
       if (s.node) {
@@ -186,13 +200,14 @@ window.createMap = function (svg) {
         continue;
       }
       const L = links[s.link];
+      if (!L.len) L.len = L.path.getTotalLength();
       L.path.classList.add('active');
       if (reduce()) { await wait(1600); }
       else {
         const from = s.dir < 0 ? L.len : 0, to = s.dir < 0 ? 0 : L.len;
         place(L.path, from); show(packet, true); show(halo, true);
         const o = { t: from };
-        await new Promise(res => gsap.to(o, {
+        await new Promise(res => tween = gsap.to(o, {
           t: to, duration: Math.max(1.2, Math.min(2.2, L.len / 110)), ease: 'power2.inOut',
           onUpdate: () => { if (my === token) place(L.path, o.t); }, onComplete: res
         }));
