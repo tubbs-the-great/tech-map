@@ -107,30 +107,25 @@ button { font: inherit; cursor: pointer; }
 .hero-art { flex: 1 1 480px; min-width: 0; position: relative; max-width: 600px; }
 .hero-card {
   position: relative; background: var(--surface-card); border: 1px solid var(--line);
-  border-radius: var(--radius-xl); box-shadow: var(--shadow-card); padding: 20px 24px 8px;
-  max-width: 520px; width: 88%;
+  border-radius: var(--radius-xl); box-shadow: var(--shadow-card); padding: 16px 20px 12px;
+  max-width: 560px; width: 92%;
 }
-.hero-card-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--subtle); }
-.hero-svg { display: block; width: 100%; height: auto; margin-top: 8px; }
+.hero-card-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 22px; }
+.hero-card-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--subtle); font-variant-numeric: tabular-nums; }
+.hero-replay { white-space: nowrap; font: inherit; font-size: 12px; font-weight: 500; color: var(--navy-600); background: none; border: 0; padding: 2px 4px; cursor: pointer; }
+.hero-replay:hover { color: var(--navy); }
+.hero-map { margin-top: 6px; background-color: var(--surface-page); background-image: linear-gradient(var(--grid-dot) 1px, transparent 1px), linear-gradient(90deg, var(--grid-dot) 1px, transparent 1px); background-size: 24px 24px; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 8px; }
+.hero-map svg { display: block; width: 100%; height: auto; }
+.hero-map .m-node .title { font-size: 17px; }
+.hero-map .m-node .sub { font-size: 12.5px; }
+.hero-map .m-new { display: none; }
 .hero-json {
-  position: absolute; right: 0; bottom: -40px; width: min(260px, 70%);
-  background: var(--navy); color: var(--code-on-navy); border-radius: 12px; padding: 16px 18px;
+  margin-top: 14px; max-width: 560px; width: 92%;
+  background: var(--navy); color: var(--code-on-navy); border-radius: 12px; padding: 12px 18px;
   font-family: var(--mono); font-size: 12px; line-height: 1.6; box-shadow: var(--shadow-float);
   white-space: pre-wrap; word-break: break-word;
 }
-.h-link { stroke: var(--navy); stroke-width: 1.5; fill: none; }
-.h-active { stroke-width: 2.5; }
-.h-dashed { stroke: var(--line-optional); stroke-dasharray: 4 4; }
-.h-soft { stroke: var(--line-optional); }
-.h-node rect { fill: var(--surface-card); stroke: var(--line-node); stroke-width: 1; }
-.h-node text { font-family: var(--sans); font-size: 14px; font-weight: 500; fill: var(--navy); text-anchor: middle; }
-.h-hub rect { fill: var(--navy); stroke: var(--navy); }
-.h-hub text { fill: var(--on-navy); }
-.h-focus rect { stroke: var(--navy); stroke-width: 1.5; }
-.h-opt rect { stroke: var(--line-optional); stroke-dasharray: 4 3; }
-.h-opt text { fill: var(--muted); }
-.h-dot { fill: var(--navy); }
-.h-halo { fill: var(--navy); opacity: .14; }
+.hero-json b { color: var(--on-navy-muted); font-weight: 400; }
 
 /* lesson: one pass per screen */
 [hidden] { display: none !important; }
@@ -174,10 +169,10 @@ button { font: inherit; cursor: pointer; }
 @keyframes cardIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .card h2 { font-size: clamp(30px, 3.2vw, 42px); line-height: 1.06; }
 .panel-foot { flex: none; display: flex; flex-direction: column; gap: 12px; padding-top: 14px; border-top: 1px solid var(--line); }
-.dots { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; }
-.dots button { width: 28px; height: 6px; border: 0; border-radius: 3px; background: var(--progress-off); cursor: pointer; padding: 0; display: block; }
-.dots li.on button { background: var(--navy); }
-.dots li.past button { background: var(--navy-600); }
+.card-dots { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; }
+.card-dots button { width: 28px; height: 6px; border: 0; border-radius: 3px; background: var(--progress-off); cursor: pointer; padding: 0; display: block; }
+.card-dots li.on button { background: var(--navy); }
+.card-dots li.past button { background: var(--navy-600); }
 .panel-nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .locked-note { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .locked-note .note { font-size: 12px; color: var(--muted); }
@@ -313,7 +308,7 @@ button { font: inherit; cursor: pointer; }
 @media (max-width: 960px) {
   :root { --gutter: 20px; }
   .hero-inner { min-height: 0; padding-block: 56px 72px; gap: 40px; }
-  .hero-json { position: static; width: 100%; margin-top: 14px; }
+  .hero-json { width: 100%; }
   .hero-card { width: 100%; max-width: none; }
   .lesson-grid { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 0; gap: 20px; padding-block: 16px 40px; }
   .stage { height: auto; max-height: none; }
