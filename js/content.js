@@ -429,14 +429,22 @@ window.TECH_MAP = {
   },
 
   built: {
-    headline: 'This site was built the way it teaches.',
+    eyebrow: 'YOUR TURN',
+    headline: 'You can build things now.',
     paras: [
-      'Every word and every line of code here was written by an AI, directed by a person. The design was chosen from mock-ups on a canvas, recorded as a small design system, and then built by an AI coding agent in a plain project folder.',
-      'That project lives on GitHub. Each change was saved as a commit, with a note saying what changed and why, and pushed to a server that serves it to you. Which is to say: a client asked, DNS found the server, and this page came back. The map at the top of this screen is the map of this site.',
-      'You can read the whole trail. Every commit is public, and it includes the fixes: the map that was too small, the scrolling that felt wrong, the quiz question that trapped people. That is what building with AI looks like.'
+      'You just learned the machine. Every app you use, and every AI tool that comes out next month, is made of the pieces on this map. That is most of what the experts know, too.',
+      'The part that used to stop people was the code. It doesn\'t anymore. If you can describe what you want clearly, in plain words, AI can write the code. And you now have the words: a front end, a back end, a database, an API, a deploy.',
+      'This site is the proof. It started as an idea and a document. The thinking, the choices and the taste came from a person. The code came from AI. You could do the same thing this afternoon.'
+    ],
+    startTitle: 'A GOOD FIRST PROJECT',
+    start: [
+      'Pick something small that you would actually use.',
+      'Describe it using the map\'s words. Say what the front end shows and what the database remembers.',
+      'Ask the AI to explain its plan before it builds.',
+      'When something breaks, say where: front end, back end, database, API or deploy.'
     ],
     link: 'https://github.com/tubbs-the-great/tech-map/commits/main',
-    linkLabel: 'Read the commit history on GitHub →'
+    linkLabel: 'Curious how this site came together? The build is public on GitHub.'
   },
 
   glossary: [

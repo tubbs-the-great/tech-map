@@ -290,7 +290,9 @@ button { font: inherit; cursor: pointer; }
 .built-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.45; color: var(--ink-body); }
 .built-steps li::marker { font-family: var(--mono); font-size: 12px; color: var(--navy-600); }
 .built-steps b { color: var(--navy); }
-.built-aside .btn { align-self: flex-start; margin-top: 4px; }
+.built-link { font-size: 14px; color: var(--muted); }
+.built-link a { color: var(--muted); }
+.built-link a:hover { color: var(--navy); }
 .closing-head .eyebrow.done { color: var(--good); }
 
 /* glossary */

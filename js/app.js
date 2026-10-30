@@ -334,8 +334,11 @@
     fullNodes[id].g.addEventListener('click', pick);
     fullNodes[id].g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
   }
+  $('builtEyebrow').textContent = D.built.eyebrow;
   $('builtHeadline').textContent = D.built.headline;
   $('builtParas').innerHTML = D.built.paras.map(t => `<p>${esc(t)}</p>`).join('');
+  $('builtStartTitle').textContent = D.built.startTitle;
+  $('builtStart').innerHTML = D.built.start.map(t => `<li>${esc(t)}</li>`).join('');
   const bl = $('builtLink'); bl.href = D.built.link; bl.textContent = D.built.linkLabel;
   $('questions').innerHTML = D.closing.questions.map(([q, t]) => `<li><b>${esc(q)}</b>${esc(t)}</li>`).join('');
   $('wholeStory').innerHTML = D.closing.wholeStory.map(t => `<li>${esc(t)}</li>`).join('');
