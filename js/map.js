@@ -248,8 +248,8 @@ window.createMap = function (svg) {
     return my === token;
   }
 
-  let resizeTimer;
-  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (current) frame(lastFrame, false); }, 150); });
+  let resizeTimer, lastW = 0;
+  window.addEventListener('resize', () => { if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (current) frame(lastFrame, false); }, 150); });
   const frameAndRemember = (ids, animate, duration) => { lastFrame = ids; frame(ids, animate, duration); };
 
   return { render, play, stop, frame: frameAndRemember, frameSmart, setDim, setFocus, setSelected, flash, nodes: () => nodes, isVisible: id => current >= M.nodes[id].from };

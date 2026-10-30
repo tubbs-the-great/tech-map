@@ -243,7 +243,7 @@
     dotsEl.innerHTML = cards.map((_, k) => `<li class="${k === cardIndex ? 'on' : k < cardIndex ? 'past' : ''}"><button type="button" data-k="${k}" aria-label="Step ${k + 1} of ${cards.length}"></button></li>`).join('');
     renderNav();
     askHint();
-    cardEl.focus({ preventScroll: true });
+    if (!narrowQuery.matches) cardEl.focus({ preventScroll: true });
   }
   function renderNav() {
     const lastCard = cardIndex === cards.length - 1;
@@ -282,8 +282,11 @@
     box.querySelector('.feedback').innerHTML = (i === c.answer ? '<b class="good">Right.</b> ' : '<b class="bad">Not quite.</b> ') + esc(c.why);
   });
 
-  let resizeTimer;
+  // phones fire resize as the address bar shows and hides; only a width change is a real resize
+  let resizeTimer, lastWidth = window.innerWidth;
   window.addEventListener('resize', () => {
+    if (window.innerWidth === lastWidth) return;
+    lastWidth = window.innerWidth;
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       if (view !== 'lesson' || !blocks.length) return;
