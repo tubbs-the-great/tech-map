@@ -20,7 +20,7 @@
   <meta name="twitter:image" content="https://tubbs-the-great.github.io/tech-map/og.png">
   <meta name="theme-color" content="#0B1749">
   <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/styles.css?v=19">
+  <link rel="stylesheet" href="css/styles.css?v=20">
 </head>
 <body>
   <a class="skip" href="#story">Skip to the story</a>
@@ -47,13 +47,26 @@
         </div>
         <div class="hero-art" aria-hidden="true">
           <div class="hero-card">
-            <div class="hero-card-bar">
-              <span class="hero-card-label" id="heroLabel">THE MAP · PASS 1 OF 12</span>
-              <button class="hero-replay" id="heroReplay" type="button" aria-label="Watch the map build again" hidden>↻ Watch again</button>
-            </div>
-            <div class="hero-map"><svg id="mapHero" role="img" aria-label="The system map building itself, one pass at a time"></svg></div>
+            <span class="hero-card-label">THE MAP · BY THE END</span>
+            <svg viewBox="0 0 520 360" class="hero-svg">
+              <path class="h-link" d="M 150 180 L 210 180"/>
+              <path class="h-link h-active" id="heroPath" d="M 330 160 C 360 160, 360 100, 390 100"/>
+              <path class="h-link h-dashed" d="M 330 200 C 360 200, 360 260, 390 260"/>
+              <path class="h-link h-soft" d="M 270 220 L 270 268"/>
+              <g class="h-node"><rect x="40" y="152" width="110" height="56" rx="8"/><text x="95" y="185">You</text></g>
+              <g class="h-node h-hub"><rect x="210" y="140" width="120" height="80" rx="8"/><text x="270" y="185">The app</text></g>
+              <g class="h-node"><rect x="215" y="268" width="110" height="48" rx="8"/><text x="270" y="297">Database</text></g>
+              <g class="h-node h-focus"><rect x="390" y="72" width="100" height="56" rx="8"/><text x="440" y="105">AI model</text></g>
+              <g class="h-node h-opt"><rect x="390" y="236" width="100" height="48" rx="8"/><text x="440" y="265">Tools</text></g>
+              <circle class="h-halo" id="heroHalo" r="12" cx="360" cy="130"/>
+              <circle class="h-dot" id="heroDot" r="4.5" cx="360" cy="130"/>
+            </svg>
           </div>
-          <pre class="hero-json"><b>Your message, as the AI sees it:</b>  { "role": "user", "content": "Any good books?" }</pre>
+          <pre class="hero-json">Your message, as the AI sees it:
+{
+  "role": "user",
+  "content": "Any good books?"
+}</pre>
         </div>
       </div>
     </section>
@@ -161,8 +174,8 @@
   </footer>
 
   <script src="js/vendor/gsap.min.js"></script>
-  <script src="js/content.js?v=19"></script>
-  <script src="js/map.js?v=19"></script>
-  <script src="js/app.js?v=19"></script>
+  <script src="js/content.js?v=20"></script>
+  <script src="js/map.js?v=20"></script>
+  <script src="js/app.js?v=20"></script>
 </body>
 </html>

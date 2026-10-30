@@ -363,35 +363,18 @@
         openPass(n); return;
       }
     }
-    map.stop(); showView('home'); renderHome(); renderProgress(); heroMaybeStart();
+    map.stop(); showView('home'); renderHome(); renderProgress();
   }
   window.addEventListener('hashchange', route);
 
-  /* ---------- hero: the map builds itself once, then holds ---------- */
-  const HERO = window.createMap($('mapHero'));
-  const heroLabel = $('heroLabel'), heroReplay = $('heroReplay');
-  let heroRun = 0, heroDone = false;
-  function heroBuild() {
-    const my = ++heroRun;
-    heroReplay.hidden = true;
-    HERO.stop();
-    HERO.render(TOTAL); HERO.frame(null, false);
-    if (reduce()) { heroLabel.textContent = 'THE MAP · ALL 12 PASSES'; heroDone = true; return; }
-    HERO.render(1); heroLabel.textContent = 'THE MAP · PASS 1 OF 12';
-    let p = 1;
-    const step = () => {
-      if (my !== heroRun) return;
-      p++;
-      if (p > TOTAL) { heroLabel.textContent = 'THE MAP · ALL 12 PASSES'; heroDone = true; heroReplay.hidden = false; return; }
-      HERO.render(p); heroLabel.textContent = `THE MAP · PASS ${p} OF 12`;
-      setTimeout(step, 1000);
-    };
-    setTimeout(step, 1100);
-  }
-  heroReplay.addEventListener('click', heroBuild);
-  // the home view is the first thing shown, so build once it is on screen
-  let heroStarted = false;
-  function heroMaybeStart() { if (!heroStarted && view === 'home') { heroStarted = true; setTimeout(heroBuild, 400); } }
+  /* ---------- hero: the packet drifts along the active path ---------- */
+  (function hero() {
+    const path = $('heroPath'), dot = $('heroDot'), halo = $('heroHalo');
+    if (!path || reduce()) return;
+    const len = path.getTotalLength(), o = { t: 0 };
+    gsap.to(o, { t: len, duration: 2.4, ease: 'power1.inOut', repeat: -1, repeatDelay: 1.6, yoyo: true,
+      onUpdate: () => { const p = path.getPointAtLength(o.t); dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y); halo.setAttribute('cx', p.x); halo.setAttribute('cy', p.y); } });
+  })();
 
   route();
 })();
