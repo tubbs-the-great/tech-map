@@ -433,7 +433,7 @@ window.TECH_MAP = {
     headline: 'You can build things now.',
     paras: [
       'You just learned the machine. Every app you use, and every AI tool that comes out next month, is made of the pieces on this map. That is most of what the experts know, too.',
-      'The part that used to stop people was the code. It doesn\'t anymore. If you can describe what you want clearly, in plain words, AI can write the code. And you now have the words: a front end, a back end, a database, an API, a deploy.',
+      'The part that used to stop people was the code. It doesn\'t anymore. If you can describe what you want clearly, in plain words, AI can write the code. And you now have the words: a front end, a back end, a database, an API, a deployment.',
       'This site is the proof. It started as an idea and a document. The thinking, the choices and the taste came from a person. The code came from AI. You could do the same thing this afternoon.'
     ],
     startTitle: 'A GOOD FIRST PROJECT',
@@ -441,7 +441,7 @@ window.TECH_MAP = {
       'Pick something small that you would actually use.',
       'Describe it using the map\'s words. Say what the front end shows and what the database remembers.',
       'Ask the AI to explain its plan before it builds.',
-      'When something breaks, say where: front end, back end, database, API or deploy.'
+      'When something breaks, say where: front end, back end, database, API or deployment.'
     ],
     link: 'https://github.com/tubbs-the-great/tech-map/commits/main',
     linkLabel: 'Curious how this site came together? The build is public on GitHub.'
