@@ -321,9 +321,9 @@
       p++;
       if (p > TOTAL) return;
       FULL.render(p);
-      setTimeout(step, 480);
+      setTimeout(step, 800);
     };
-    setTimeout(step, 600);
+    setTimeout(step, 800);
   }
   const fullDef = $('fullDef'), fullNodes = FULL.nodes();
   for (const id in fullNodes) {
@@ -384,9 +384,9 @@
       p++;
       if (p > TOTAL) { heroLabel.textContent = 'THE MAP · ALL 12 PASSES'; heroDone = true; heroReplay.hidden = false; return; }
       HERO.render(p); heroLabel.textContent = `THE MAP · PASS ${p} OF 12`;
-      setTimeout(step, 720);
+      setTimeout(step, 1000);
     };
-    setTimeout(step, 900);
+    setTimeout(step, 1100);
   }
   heroReplay.addEventListener('click', heroBuild);
   // the home view is the first thing shown, so build once it is on screen

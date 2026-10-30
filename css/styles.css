@@ -190,7 +190,7 @@ button { font: inherit; cursor: pointer; }
 .m-link.dashed { stroke: var(--line-optional); stroke-dasharray: 5 5; }
 .m-link.active { stroke-width: 2.5; }
 .m-link-label { font-family: var(--mono); font-size: 11px; fill: var(--muted); text-anchor: middle; }
-.m-node { cursor: pointer; }
+.m-node { cursor: pointer; transform-box: fill-box; transform-origin: center; }
 .m-node rect.box { fill: var(--surface-card); stroke: var(--line-node); stroke-width: 1; transition: stroke .25s, stroke-width .25s; }
 .m-node.hub rect.box { fill: var(--navy); stroke: var(--navy); }
 .m-node.dashed rect.box { stroke: var(--line-optional); stroke-dasharray: 5 4; }

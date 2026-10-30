@@ -113,21 +113,42 @@ window.createMap = function (svg) {
     for (const id in links) { const l = M.links[id]; links[id].g.classList.toggle('dim', !!ids && !(l.ends && l.ends.every(e => ids.includes(e)))); }
   }
 
+  /* a smooth reveal: lines draw themselves in, boxes ease in with a small lift */
+  function revealNode(g, i) {
+    gsap.fromTo(g, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.7, delay: 0.15 + i * 0.12, ease: 'power2.out', onComplete: () => gsap.set(g, { clearProps: 'opacity,transform,y' }) });
+  }
+  function revealLink(e, i) {
+    const path = e.path;
+    if (!e.len) e.len = path.getTotalLength();
+    const len = e.len;
+    const wasDashed = path.classList.contains('dashed');
+    gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
+    gsap.to(path, { strokeDashoffset: 0, duration: 0.8, delay: 0.3 + i * 0.1, ease: 'power2.inOut',
+      onComplete: () => { gsap.set(path, { clearProps: 'strokeDasharray,strokeDashoffset' }); if (wasDashed) path.classList.add('dashed'); } });
+    if (e.label) gsap.fromTo(e.label, { opacity: 0 }, { opacity: 1, duration: 0.5, delay: 0.8 + i * 0.1, onComplete: () => gsap.set(e.label, { clearProps: 'opacity' }) });
+  }
   function render(p) {
-    const animate = current !== 0 && p !== current;
+    const animate = current !== 0 && p !== current && !reduce();
     current = p;
-    for (const id in M.regions) show(regions[id], p >= M.regions[id].from);
+    let ri = 0, li = 0, ni = 0;
+    for (const id in M.regions) {
+      const was = regions[id].classList.contains('m-hidden'), on = p >= M.regions[id].from;
+      show(regions[id], on);
+      if (on && was && animate) gsap.fromTo(regions[id], { opacity: 0 }, { opacity: 1, duration: 0.9, delay: 0.2 + ri++ * 0.1, onComplete: () => gsap.set(regions[id], { clearProps: 'opacity' }) });
+    }
     for (const id in M.links) {
       const l = M.links[id], e = links[id];
-      show(e.g, p >= l.from);
+      const was = e.g.classList.contains('m-hidden'), on = p >= l.from;
+      show(e.g, on);
       if (e.label) e.label.textContent = l.label(p);
+      if (on && was && animate) revealLink(e, li++);
     }
     for (const id in M.nodes) {
       const n = M.nodes[id], e = nodes[id];
       const on = p >= n.from;
       const wasHidden = e.g.classList.contains('m-hidden');
       show(e.g, on);
-      if (on && wasHidden && animate && !reduce()) gsap.fromTo(e.g, { opacity: 0 }, { opacity: 1, duration: 0.6, delay: 0.5, onComplete: () => gsap.set(e.g, { clearProps: 'opacity' }) });
+      if (on && wasHidden && animate) revealNode(e.g, ni++);
       e.g.setAttribute('tabindex', on ? '0' : '-1');
       e.g.classList.toggle('hub', n.kind === 'hub');
       e.g.classList.toggle('dashed', !!n.dashed);
@@ -135,7 +156,9 @@ window.createMap = function (svg) {
       show(e.tag, on && p === n.from);
       const y = typeof n.y === 'function' ? n.y(p) : n.y, h = typeof n.h === 'function' ? n.h(p) : n.h;
       const compact = !!n.compact;
-      e.box.setAttribute('y', y); e.box.setAttribute('height', h);
+      const prevY = +e.box.getAttribute('y'), prevH = +e.box.getAttribute('height');
+      if (animate && !wasHidden && on && prevH && (prevY !== y || prevH !== h)) gsap.to(e.box, { attr: { y, height: h }, duration: 0.6, ease: 'power2.inOut' });
+      else { e.box.setAttribute('y', y); e.box.setAttribute('height', h); }
       e.title.setAttribute('y', y + (compact ? 22 : 28)); e.sub.setAttribute('y', y + (compact ? 40 : 46));
       e.tagRect.setAttribute('y', y - 9); e.tagText.setAttribute('y', y + 3);
       e.title.textContent = n.title(p);
